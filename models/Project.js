@@ -50,5 +50,16 @@ ProjectSchema.index({ status: 1 });
 ProjectSchema.index({ type: 1 });
 ProjectSchema.index({ featured: 1 });
 
+ProjectSchema.pre('validate', function (next) {
+  if (this.name && !this.slug) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  }
+  next();
+});
+
 const Project = model('Project', ProjectSchema);
 export default Project;
