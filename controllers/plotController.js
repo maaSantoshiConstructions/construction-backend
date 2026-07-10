@@ -9,7 +9,7 @@ export const getPlots = async (req, res) => {
       .limitFields()
       .paginate();
 
-    const plots = await features.query.populate('project', 'name slug type');
+    const plots = await features.query.populate('project', 'name slug type').populate('owner', 'name email phone');
     const total = await Plot.countDocuments({ isActive: true });
 
     res.status(200).json({
@@ -25,7 +25,9 @@ export const getPlots = async (req, res) => {
 
 export const getPlot = async (req, res) => {
   try {
-    const plot = await Plot.findById(req.params.id).populate('project', 'name slug type location');
+    const plot = await Plot.findById(req.params.id)
+      .populate('project', 'name slug type location')
+      .populate('owner', 'name email phone');
 
     if (!plot) {
       return res.status(404).json({ success: false, message: 'Plot not found' });
@@ -93,7 +95,7 @@ export const getAvailablePlots = async (req, res) => {
       .limitFields()
       .paginate();
 
-    const plots = await features.query.populate('project', 'name slug type');
+    const plots = await features.query.populate('project', 'name slug type').populate('owner', 'name email phone');
     const total = await Plot.countDocuments({ isActive: true, status: 'available' });
 
     res.status(200).json({

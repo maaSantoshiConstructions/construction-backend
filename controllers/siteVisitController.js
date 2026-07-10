@@ -1,6 +1,7 @@
 import SiteVisit from '../models/SiteVisit.js';
 import sendEmail from '../utils/email.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import Notification from '../models/Notification.js';
 
 export const getSiteVisits = async (req, res) => {
   try {
@@ -105,6 +106,18 @@ export const confirmVisit = async (req, res) => {
       console.error('Email sending failed:', emailError.message);
     }
 
+    // Create a dashboard notification for the customer
+    try {
+      await Notification.create({
+        recipient: visit.customer._id,
+        title: 'Site Visit Confirmed',
+        message: `Your site visit has been confirmed for ${new Date(visit.preferredDate).toLocaleDateString()} at ${visit.preferredTime || 'the scheduled time'}.`,
+        type: 'push',
+      });
+    } catch (notifErr) {
+      console.error('Failed to create site visit confirmation notification:', notifErr.message);
+    }
+
     res.status(200).json({ success: true, data: visit });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -123,6 +136,18 @@ export const completeVisit = async (req, res) => {
 
     if (!visit) {
       return res.status(404).json({ success: false, message: 'Site visit not found' });
+    }
+
+    // Create a dashboard notification for the customer
+    try {
+      await Notification.create({
+        recipient: visit.customer,
+        title: 'Site Visit Completed',
+        message: 'Thank you for visiting our project site! We hope you had a great experience.',
+        type: 'push',
+      });
+    } catch (notifErr) {
+      console.error('Failed to create site visit completion notification:', notifErr.message);
     }
 
     res.status(200).json({ success: true, data: visit });

@@ -40,5 +40,42 @@ PlotSchema.index({ plotNumber: 1, project: 1 }, { unique: true });
 PlotSchema.index({ project: 1, status: 1 });
 PlotSchema.index({ facing: 1 });
 
+// Static method to update totalPlots on Project
+PlotSchema.statics.updateTotalPlots = async function (projectId) {
+  if (!projectId) return;
+  const Project = mongoose.model('Project');
+  const count = await this.countDocuments({ project: projectId, isActive: true });
+  await Project.findByIdAndUpdate(projectId, { totalPlots: count });
+};
+
+// Post save hook
+PlotSchema.post('save', async function () {
+  await this.constructor.updateTotalPlots(this.project);
+});
+
+// Pre findOneAndUpdate hook to capture original project
+PlotSchema.pre(/^findOneAnd/, async function () {
+  this._originalPlot = await this.model.findOne(this.getQuery());
+});
+
+// Post findOneAndUpdate hook
+PlotSchema.post(/^findOneAnd/, async function (doc) {
+  if (doc) {
+    await doc.constructor.updateTotalPlots(doc.project);
+    if (
+      this._originalPlot &&
+      this._originalPlot.project &&
+      this._originalPlot.project.toString() !== doc.project.toString()
+    ) {
+      await doc.constructor.updateTotalPlots(this._originalPlot.project);
+    }
+  }
+});
+
+// Post remove hook
+PlotSchema.post('remove', async function () {
+  await this.constructor.updateTotalPlots(this.project);
+});
+
 const Plot = model('Plot', PlotSchema);
 export default Plot;

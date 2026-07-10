@@ -62,5 +62,40 @@ BookingSchema.pre('save', function (next) {
   next();
 });
 
+// Helper function to update associated plot
+const updateAssociatedPlot = async (bookingDoc) => {
+  const Plot = mongoose.model('Plot');
+  let plotStatus = 'available';
+  let owner = null;
+
+  if (bookingDoc.isActive) {
+    if (bookingDoc.status === 'completed') {
+      plotStatus = 'sold';
+      owner = bookingDoc.customer;
+    } else if (bookingDoc.status === 'token' || bookingDoc.status === 'partial') {
+      plotStatus = 'reserved';
+      owner = bookingDoc.customer;
+    }
+  }
+
+  await Plot.findByIdAndUpdate(bookingDoc.plot, {
+    status: plotStatus,
+    owner: owner,
+    booking: bookingDoc.isActive && bookingDoc.status !== 'cancelled' ? bookingDoc._id : null,
+  });
+};
+
+// Post save hook
+BookingSchema.post('save', async function () {
+  await updateAssociatedPlot(this);
+});
+
+// Post findOneAndUpdate hook
+BookingSchema.post(/^findOneAndUpdate/, async function (doc) {
+  if (doc) {
+    await updateAssociatedPlot(doc);
+  }
+});
+
 const Booking = model('Booking', BookingSchema);
 export default Booking;

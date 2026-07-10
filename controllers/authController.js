@@ -12,20 +12,15 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
-    const user = await User.create({ name, email, phone, password, role: role || 'customer' });
-
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    user.verificationToken = verificationToken;
-    await user.save();
-
-    if (process.env.NODE_ENV !== 'test') {
-      const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
-      await sendEmail({
-        to: user.email,
-        subject: 'Email Verification',
-        html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
-      });
-    }
+    // Users are created as verified by default (SMTP/email verification disabled)
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password,
+      role: role || 'customer',
+      isVerified: true,
+    });
 
     const token = user.getSignedJwtToken();
 
@@ -62,10 +57,6 @@ export const login = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    if (!user.isVerified) {
-      return res.status(403).json({ success: false, message: 'Please verify your email before logging in' });
     }
 
     const token = user.getSignedJwtToken();
