@@ -36,6 +36,7 @@ const ProjectSchema = new Schema(
     images: [String],
     videos: [String],
     amenities: [String],
+    highlights: [String],
     reraNumber: String,
     possessionDate: Date,
     layoutImage: String,

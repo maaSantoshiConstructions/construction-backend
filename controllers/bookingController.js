@@ -1,6 +1,7 @@
 import Booking from '../models/Booking.js';
 import Plot from '../models/Plot.js';
 import Customer from '../models/Customer.js';
+import Payment from '../models/Payment.js';
 import APIFeatures from '../utils/apiFeatures.js';
 
 export const getBookings = async (req, res) => {
@@ -89,6 +90,21 @@ export const createBooking = async (req, res) => {
       },
       { upsert: true, new: true }
     );
+
+    // Automatically create a token payment transaction in payments log
+    if (tokenAmount && tokenAmount > 0) {
+      await Payment.create({
+        booking: booking._id,
+        customer: customer || req.user._id,
+        amount: tokenAmount,
+        paymentType: 'token',
+        paymentMethod: 'cash', // Default to cash for direct dashboard bookings
+        status: 'completed',
+        paidAt: new Date(),
+        remarks: 'Token amount paid during booking registration.',
+        transactionId: `TXN-${booking.bookingId || booking._id.toString().slice(-6)}`
+      });
+    }
 
     res.status(201).json({ success: true, data: booking });
   } catch (error) {
