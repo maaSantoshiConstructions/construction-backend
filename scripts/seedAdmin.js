@@ -17,13 +17,13 @@ const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/maaSanto
 
 const UserSchema = new mongoose.Schema(
   {
-    name:     { type: String, required: true, trim: true },
-    email:    { type: String, required: true, unique: true, lowercase: true },
-    phone:    { type: String },
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    phone: { type: String },
     password: { type: String, required: true, select: false },
-    role:     { type: String, enum: ['super_admin','company_admin','sales_executive','channel_partner','customer'], default: 'customer' },
+    role: { type: String, enum: ['super_admin', 'company_admin', 'sales_executive', 'channel_partner', 'customer'], default: 'customer' },
     isVerified: { type: Boolean, default: true },
-    isActive:   { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
@@ -31,13 +31,13 @@ const UserSchema = new mongoose.Schema(
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const ADMIN = {
-  name:     'Super Admin',
-  email:    'admin@jsminfra.com',
-  phone:    '+91 70000 12345',
+  name: 'Super Admin',
+  email: 'admin@construction.com',
+  phone: '+91 70000 12345',
   password: 'Admin@123',
-  role:     'super_admin',
+  role: 'super_admin',
   isVerified: true,
-  isActive:   true,
+  isActive: true,
 };
 
 async function seed() {

@@ -19,7 +19,7 @@ const LeadSchema = new Schema(
     source: {
       type: String,
       enum: {
-        values: ['website', 'whatsapp', 'referral', 'walk_in', 'phone_call', 'social_media', 'other'],
+        values: ['website', 'website_contact', 'whatsapp', 'referral', 'walk_in', 'phone_call', 'social_media', 'other'],
         message: '{VALUE} is not a valid lead source',
       },
       required: [true, 'Lead source is required'],
