@@ -11,7 +11,7 @@ const ConstructionUpdateSchema = new Schema(
     stage: {
       type: String,
       enum: {
-        values: ['site_clearing', 'foundation', 'structure', 'finishing', 'handover'],
+        values: ['planning', 'foundation', 'structure', 'roofing', 'finishing', 'completed'],
         message: '{VALUE} is not a valid construction stage',
       },
       required: [true, 'Stage is required'],

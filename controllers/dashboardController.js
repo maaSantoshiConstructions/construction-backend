@@ -180,15 +180,21 @@ export const getCustomerDashboard = async (req, res) => {
       .populate('project', 'name slug');
 
     if (customerRecord?.plot) {
-      recentUpdates.push(
-        ...await ConstructionUpdate.find({
-          plot: customerRecord.plot,
-          isActive: true,
-        })
-          .sort('-date')
-          .limit(5)
-          .populate('project', 'name slug')
-      );
+      const plotUpdates = await ConstructionUpdate.find({
+        plot: customerRecord.plot,
+        isActive: true,
+      })
+        .sort('-date')
+        .limit(5)
+        .populate('project', 'name slug');
+
+      const seenIds = new Set(recentUpdates.map((u) => u._id.toString()));
+      plotUpdates.forEach((u) => {
+        if (!seenIds.has(u._id.toString())) {
+          recentUpdates.push(u);
+          seenIds.add(u._id.toString());
+        }
+      });
     }
 
     const notifications = await Notification.find({
