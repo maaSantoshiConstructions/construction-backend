@@ -1,4 +1,5 @@
 import Plot from '../models/Plot.js';
+import Project from '../models/Project.js';
 import APIFeatures from '../utils/apiFeatures.js';
 
 export const getPlots = async (req, res) => {
@@ -161,11 +162,17 @@ export const updatePlotStatus = async (req, res) => {
 
 export const getPlotMapData = async (req, res) => {
   try {
-    const plots = await Plot.find({
-      isActive: true,
-      'coordinates.lat': { $exists: true },
-      'coordinates.lng': { $exists: true },
-    }).select('plotNumber coordinates status facing project');
+    const { project } = req.query;
+    const filter = { isActive: true, status: { $ne: 'sold' } };
+
+    if (project) {
+      const proj = await Project.findOne({ slug: project, isActive: true }).select('_id');
+      if (proj) filter.project = proj._id;
+    }
+
+    const plots = await Plot.find(filter)
+      .populate('project', 'name slug type location.city status')
+      .select('plotNumber size price pricePerSqft facing corner roadWidth status project coordinates');
 
     res.status(200).json({ success: true, count: plots.length, data: plots });
   } catch (error) {

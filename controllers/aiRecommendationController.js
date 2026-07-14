@@ -2,19 +2,21 @@ import AIRecommendation from '../models/AIRecommendation.js';
 import Plot from '../models/Plot.js';
 import Project from '../models/Project.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import { getGeminiRecommendations } from '../utils/geminiService.js';
 
 const BUDGET_MAP = {
   '0-1000000': { min: 0, max: 1000000, label: 'Under ₹10 Lakhs' },
-  '1000000-1500000': { min: 1000000, max: 1500000, label: '₹10 - ₹15 Lakhs' },
-  '1500000-2000000': { min: 1500000, max: 2000000, label: '₹15 - ₹20 Lakhs' },
-  '2000000+': { min: 2000000, max: Infinity, label: 'Above ₹20 Lakhs' },
+  '1000000-2500000': { min: 1000000, max: 2500000, label: '₹10 – ₹25 Lakhs' },
+  '2500000-4000000': { min: 2500000, max: 4000000, label: '₹25 – ₹40 Lakhs' },
+  '4000000-6000000': { min: 4000000, max: 6000000, label: '₹40 – ₹60 Lakhs' },
+  '6000000+': { min: 6000000, max: Infinity, label: 'Above ₹60 Lakhs' },
 };
 
 const PROPERTY_TYPE_MAP = {
-  'Residential Plot': ['plotted_development'],
-  'Commercial Plot': ['plotted_development'],
-  'Villa': ['villas', 'plotted_development'],
-  'Farm Land': ['plotted_development'],
+  'Plotted Development': ['plotted_development'],
+  'Villas': ['villas'],
+  'Apartments': ['apartments'],
+  'Commercial': ['commercial'],
 };
 
 const generateMatchReasons = (plot, project, budgetMid, preferences) => {
@@ -154,105 +156,128 @@ export const createRecommendation = async (req, res) => {
       });
     }
 
-    const scored = plots.map((plot) => {
-      let score = 0;
-      const breakdown = [];
+    let scored;
 
-      if (budgetMid > 0) {
-        const priceRatio = plot.price / budgetMid;
-        if (priceRatio >= 0.85 && priceRatio <= 1.15) {
-          score += 25;
-          breakdown.push({ label: 'Perfect budget fit', points: 25 });
-        } else if (priceRatio >= 0.7 && priceRatio <= 1.3) {
-          score += 15;
-          breakdown.push({ label: 'Within budget range', points: 15 });
-        } else if (priceRatio >= 0.5 && priceRatio <= 1.5) {
-          score += 5;
-          breakdown.push({ label: 'Slightly outside budget', points: 5 });
-        }
-      }
+    const geminiResults = await getGeminiRecommendations(
+      { budget: budgetRange.label || budget, location, propertyType, purpose },
+      plots
+    );
 
-      const project = plot.project;
-      if (project && project.location && project.location.city && location) {
-        if (project.location.city.toLowerCase().includes(location.toLowerCase())) {
-          score += 20;
-          breakdown.push({ label: 'Preferred location match', points: 20 });
-        }
-      }
-
-      if (plot.facing) {
-        const premiumFacing = ['North-East', 'East', 'North'];
-        if (premiumFacing.includes(plot.facing)) {
-          score += 10;
-          breakdown.push({ label: `${plot.facing} facing (premium)`, points: 10 });
-        } else {
-          score += 5;
-          breakdown.push({ label: `${plot.facing} facing`, points: 5 });
-        }
-      }
-
-      if (plot.corner) {
-        score += 10;
-        breakdown.push({ label: 'Corner plot advantage', points: 10 });
-      }
-
-      if (plot.roadWidth) {
-        if (plot.roadWidth >= 40) {
-          score += 8;
-          breakdown.push({ label: `${plot.roadWidth}ft wide road`, points: 8 });
-        } else if (plot.roadWidth >= 30) {
-          score += 5;
-          breakdown.push({ label: `${plot.roadWidth}ft road access`, points: 5 });
-        }
-      }
-
-      if (project) {
-        if (project.status === 'ongoing') {
-          score += 7;
-          breakdown.push({ label: 'Ongoing project — early advantage', points: 7 });
-        } else if (project.status === 'completed') {
-          score += 5;
-          breakdown.push({ label: 'Completed project', points: 5 });
-        }
-
-        if (project.reraNumber) {
-          score += 5;
-          breakdown.push({ label: 'RERA registered', points: 5 });
-        }
-
-        if (project.amenities && project.amenities.length >= 5) {
-          score += 5;
-          breakdown.push({ label: `${project.amenities.length} project amenities`, points: 5 });
-        }
-      }
-
-      if (purpose === 'Investment') {
-        if (plot.pricePerSqft && plot.pricePerSqft < 3000) {
-          score += 5;
-          breakdown.push({ label: 'High appreciation potential', points: 5 });
-        }
-      }
-
-      if (purpose === 'Self Use') {
-        if (plot.size >= 1200) {
-          score += 5;
-          breakdown.push({ label: 'Spacious plot for home', points: 5 });
-        }
-      }
-
-      const finalScore = Math.min(score, 100);
-      const matchReasons = generateMatchReasons(plot, project, budgetMid, {
-        location, propertyType, purpose,
+    if (geminiResults) {
+      console.log('[AI] ✅ Gemini recommendation —', geminiResults.length, 'plots scored');
+      scored = geminiResults.map((gr) => {
+        const plot = plots[gr.plotIndex];
+        const project = plot.project;
+        return {
+          plot: plot._id,
+          project: project?._id,
+          score: gr.score,
+          matchReasons: gr.matchReasons,
+          scoreBreakdown: [{ label: 'AI-analyzed recommendation', points: gr.score }],
+        };
       });
+    } else {
+      console.log('[AI] ⚠️ Rule-based fallback — Gemini unavailable');
+      scored = plots.map((plot) => {
+        let score = 0;
+        const breakdown = [];
 
-      return {
-        plot: plot._id,
-        project: project?._id,
-        score: finalScore,
-        matchReasons,
-        scoreBreakdown: breakdown,
-      };
-    });
+        if (budgetMid > 0) {
+          const priceRatio = plot.price / budgetMid;
+          if (priceRatio >= 0.85 && priceRatio <= 1.15) {
+            score += 25;
+            breakdown.push({ label: 'Perfect budget fit', points: 25 });
+          } else if (priceRatio >= 0.7 && priceRatio <= 1.3) {
+            score += 15;
+            breakdown.push({ label: 'Within budget range', points: 15 });
+          } else if (priceRatio >= 0.5 && priceRatio <= 1.5) {
+            score += 5;
+            breakdown.push({ label: 'Slightly outside budget', points: 5 });
+          }
+        }
+
+        const project = plot.project;
+        if (project && project.location && project.location.city && location) {
+          if (project.location.city.toLowerCase().includes(location.toLowerCase())) {
+            score += 20;
+            breakdown.push({ label: 'Preferred location match', points: 20 });
+          }
+        }
+
+        if (plot.facing) {
+          const premiumFacing = ['North-East', 'East', 'North'];
+          if (premiumFacing.includes(plot.facing)) {
+            score += 10;
+            breakdown.push({ label: `${plot.facing} facing (premium)`, points: 10 });
+          } else {
+            score += 5;
+            breakdown.push({ label: `${plot.facing} facing`, points: 5 });
+          }
+        }
+
+        if (plot.corner) {
+          score += 10;
+          breakdown.push({ label: 'Corner plot advantage', points: 10 });
+        }
+
+        if (plot.roadWidth) {
+          if (plot.roadWidth >= 40) {
+            score += 8;
+            breakdown.push({ label: `${plot.roadWidth}ft wide road`, points: 8 });
+          } else if (plot.roadWidth >= 30) {
+            score += 5;
+            breakdown.push({ label: `${plot.roadWidth}ft road access`, points: 5 });
+          }
+        }
+
+        if (project) {
+          if (project.status === 'ongoing') {
+            score += 7;
+            breakdown.push({ label: 'Ongoing project — early advantage', points: 7 });
+          } else if (project.status === 'completed') {
+            score += 5;
+            breakdown.push({ label: 'Completed project', points: 5 });
+          }
+
+          if (project.reraNumber) {
+            score += 5;
+            breakdown.push({ label: 'RERA registered', points: 5 });
+          }
+
+          if (project.amenities && project.amenities.length >= 5) {
+            score += 5;
+            breakdown.push({ label: `${project.amenities.length} project amenities`, points: 5 });
+          }
+        }
+
+        if (purpose === 'Investment') {
+          if (plot.pricePerSqft && plot.pricePerSqft < 3000) {
+            score += 5;
+            breakdown.push({ label: 'High appreciation potential', points: 5 });
+          }
+        }
+
+        if (purpose === 'Self Use') {
+          if (plot.size >= 1200) {
+            score += 5;
+            breakdown.push({ label: 'Spacious plot for home', points: 5 });
+          }
+        }
+
+        const finalScore = Math.min(score, 100);
+        const matchReasons = generateMatchReasons(plot, project, budgetMid, {
+          location, propertyType, purpose,
+        });
+
+        return {
+          plot: plot._id,
+          project: project?._id,
+          score: finalScore,
+          matchReasons,
+          scoreBreakdown: breakdown,
+        };
+      });
+    }
 
     scored.sort((a, b) => b.score - a.score);
     const topResults = scored.slice(0, 8);
@@ -266,6 +291,7 @@ export const createRecommendation = async (req, res) => {
       recommendedPlots: topResults,
       totalResults: plots.length,
       preferences: req.body,
+      source: geminiResults ? 'gemini' : 'rule-based',
     });
 
     const populatedRecommendation = await AIRecommendation.findById(recommendation._id)

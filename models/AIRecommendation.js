@@ -28,7 +28,7 @@ const AIRecommendationSchema = new Schema(
     location: String,
     propertyType: {
       type: String,
-      enum: ['Residential Plot', 'Commercial Plot', 'Villa', 'Farm Land'],
+      enum: ['Plotted Development', 'Villas', 'Apartments', 'Commercial'],
     },
     purpose: {
       type: String,
@@ -36,7 +36,8 @@ const AIRecommendationSchema = new Schema(
     },
     recommendedPlots: [RecommendedPlotSchema],
     totalResults: { type: Number, default: 0 },
-    preferences: { type: Schema.Mixed },
+    source: { type: String, enum: ['gemini', 'rule-based'], default: 'rule-based' },
+    preferences: { type: Schema.Types.Mixed },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

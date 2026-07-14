@@ -9,7 +9,7 @@ const ProjectSchema = new Schema(
     type: {
       type: String,
       enum: {
-        values: ['plotted_development', 'villas', 'apartments'],
+        values: ['plotted_development', 'villas', 'apartments', 'commercial'],
         message: '{VALUE} is not a valid project type',
       },
       required: [true, 'Project type is required'],
