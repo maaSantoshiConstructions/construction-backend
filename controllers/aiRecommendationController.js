@@ -164,7 +164,7 @@ export const createRecommendation = async (req, res) => {
     );
 
     if (geminiResults) {
-      console.log('[AI] ✅ Gemini recommendation —', geminiResults.length, 'plots scored');
+      console.log('[AI] ✅ NVIDIA recommendation —', geminiResults.length, 'plots scored');
       scored = geminiResults.map((gr) => {
         const plot = plots[gr.plotIndex];
         const project = plot.project;
@@ -177,7 +177,7 @@ export const createRecommendation = async (req, res) => {
         };
       });
     } else {
-      console.log('[AI] ⚠️ Rule-based fallback — Gemini unavailable');
+      console.log('[AI] ⚠️ Rule-based fallback — NVIDIA AI unavailable');
       scored = plots.map((plot) => {
         let score = 0;
         const breakdown = [];
@@ -291,7 +291,7 @@ export const createRecommendation = async (req, res) => {
       recommendedPlots: topResults,
       totalResults: plots.length,
       preferences: req.body,
-      source: geminiResults ? 'gemini' : 'rule-based',
+      source: geminiResults ? 'nvidia' : 'rule-based',
     });
 
     const populatedRecommendation = await AIRecommendation.findById(recommendation._id)

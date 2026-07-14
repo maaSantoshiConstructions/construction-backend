@@ -36,7 +36,7 @@ const AIRecommendationSchema = new Schema(
     },
     recommendedPlots: [RecommendedPlotSchema],
     totalResults: { type: Number, default: 0 },
-    source: { type: String, enum: ['gemini', 'rule-based'], default: 'rule-based' },
+    source: { type: String, enum: ['gemini', 'nvidia', 'rule-based'], default: 'rule-based' },
     preferences: { type: Schema.Types.Mixed },
     isActive: { type: Boolean, default: true },
   },

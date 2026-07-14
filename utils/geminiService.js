@@ -1,19 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const MODEL = 'meta/llama-3.1-8b-instruct';
 
-let model = null;
-let initialized = false;
+let apiKey = null;
+let keyChecked = false;
 
-const ensureInitialized = () => {
-  if (initialized) return;
-  initialized = true;
-
-  const key = process.env.GEMINI_API_KEY;
-  if (key) {
-    const genAI = new GoogleGenerativeAI(key);
-    model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    console.log('[Gemini] Initialized with API key');
+const ensureKey = () => {
+  if (keyChecked) return;
+  keyChecked = true;
+  apiKey = process.env.NVIDIA_API_KEY || null;
+  if (apiKey) {
+    console.log('[NVIDIA] Recommendation AI enabled');
   } else {
-    console.log('[Gemini] No API key found — rule-based fallback only');
+    console.log('[NVIDIA] No API key — rule-based fallback for recommendations');
   }
 };
 
@@ -82,21 +80,51 @@ Example:
 };
 
 export const getGeminiRecommendations = async (preferences, plots) => {
-  ensureInitialized();
+  ensureKey();
 
-  if (!model) {
+  if (!apiKey) {
     return null;
   }
 
   try {
     const prompt = buildPrompt(preferences, plots);
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text().trim();
+
+    const response = await fetch(NVIDIA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: 'You are a real estate AI. Return only valid JSON arrays, no markdown or extra text.' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 1024,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[NVIDIA] Recommendation API error:', response.status, errText);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!text) {
+      console.error('[NVIDIA] Empty recommendation response');
+      return null;
+    }
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      console.error('[Gemini] No JSON array in response');
+      console.error('[NVIDIA] No JSON array in recommendation response');
       return null;
     }
 
@@ -116,7 +144,7 @@ export const getGeminiRecommendations = async (preferences, plots) => {
 
     return validated.length > 0 ? validated : null;
   } catch (err) {
-    console.error('[Gemini] Error:', err.message);
+    console.error('[NVIDIA] Recommendation error:', err.message);
     return null;
   }
 };
