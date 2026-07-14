@@ -163,7 +163,7 @@ export const updatePlotStatus = async (req, res) => {
 export const getPlotMapData = async (req, res) => {
   try {
     const { project } = req.query;
-    const filter = { isActive: true, status: { $ne: 'sold' } };
+    const filter = { isActive: true };
 
     if (project) {
       const proj = await Project.findOne({ slug: project, isActive: true }).select('_id');
