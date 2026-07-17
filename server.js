@@ -7,7 +7,6 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
-import { swaggerSpec, swaggerUiExpress as swaggerUi } from './utils/swagger.js';
 
 dotenv.config();
 
@@ -33,6 +32,7 @@ import propertyComparisonRoutes from './routes/propertyComparisons.js';
 import dashboardRoutes from './routes/dashboard.js';
 import chatbotRoutes from './routes/chatbot.js';
 import propertyValuationRoutes from './routes/propertyValuations.js';
+import reviewRoutes from './routes/reviews.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -62,8 +62,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
@@ -86,6 +84,7 @@ app.use('/api/property-comparisons', propertyComparisonRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/property-valuations', propertyValuationRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
@@ -98,7 +97,6 @@ const PORT = process.env.PORT || 5002;
 connectDB().then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`Swagger docs at http://localhost:${PORT}/api-docs`);
   });
 }).catch((err) => {
   console.error('Failed to start server:', err);

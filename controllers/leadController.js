@@ -1,9 +1,15 @@
 import Lead from '../models/Lead.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import jwt from 'jsonwebtoken';
 
 export const getLeads = async (req, res) => {
   try {
-    const features = new APIFeatures(Lead.find({ isActive: true }), req.query)
+    const filter = { isActive: true };
+    if (req.user.role === 'channel_partner') {
+      filter.assignedTo = req.user._id;
+    }
+
+    const features = new APIFeatures(Lead.find(filter), req.query)
       .search(['name', 'email', 'phone'])
       .filter()
       .sort()
@@ -14,7 +20,7 @@ export const getLeads = async (req, res) => {
       .populate('assignedTo', 'name email')
       .populate('project', 'name slug');
 
-    const total = await Lead.countDocuments({ isActive: true });
+    const total = await Lead.countDocuments(filter);
 
     res.status(200).json({
       success: true,
@@ -46,7 +52,22 @@ export const getLead = async (req, res) => {
 
 export const createLead = async (req, res) => {
   try {
-    const lead = await Lead.create(req.body);
+    const leadData = { ...req.body };
+
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        leadData.assignedTo = decoded.id;
+      } catch (err) {
+        // Ignore token verify error for public contact form submissions
+      }
+    }
+
+    const lead = await Lead.create(leadData);
 
     res.status(201).json({ success: true, data: lead });
   } catch (error) {

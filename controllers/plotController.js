@@ -171,7 +171,7 @@ export const getPlotMapData = async (req, res) => {
     }
 
     const plots = await Plot.find(filter)
-      .populate('project', 'name slug type location.city status')
+      .populate('project', 'name slug type location status')
       .select('plotNumber size price pricePerSqft facing corner roadWidth status project coordinates');
 
     res.status(200).json({ success: true, count: plots.length, data: plots });

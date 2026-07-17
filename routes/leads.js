@@ -8,7 +8,7 @@ router.post('/', createLead);
 router.get('/my-leads', protect, authorize('sales_executive'), getMyLeads);
 router.get('/stats', protect, authorize('super_admin', 'company_admin'), getLeadStats);
 
-router.get('/', protect, authorize('super_admin', 'company_admin', 'sales_executive'), getLeads);
+router.get('/', protect, authorize('super_admin', 'company_admin', 'sales_executive', 'channel_partner'), getLeads);
 router.get('/:id', protect, authorize('super_admin', 'company_admin', 'sales_executive'), getLead);
 router.put('/:id', protect, authorize('super_admin', 'company_admin', 'sales_executive'), updateLead);
 router.put('/:id/assign', protect, authorize('super_admin', 'company_admin'), assignLead);

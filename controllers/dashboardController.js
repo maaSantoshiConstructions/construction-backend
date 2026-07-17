@@ -222,10 +222,20 @@ export const getCustomerDashboard = async (req, res) => {
 
 export const getPartnerDashboard = async (req, res) => {
   try {
-    const partner = await ChannelPartner.findOne({ user: req.user._id });
+    let partner = await ChannelPartner.findOne({ user: req.user._id });
 
     if (!partner) {
-      return res.status(404).json({ success: false, message: 'Partner profile not found' });
+      if (req.user.role === 'channel_partner') {
+        partner = await ChannelPartner.create({
+          user: req.user._id,
+          companyName: `${req.user.name} Co.`,
+          address: req.user.address || '',
+          city: req.user.city || '',
+          state: req.user.state || '',
+        });
+      } else {
+        return res.status(404).json({ success: false, message: 'Partner profile not found' });
+      }
     }
 
     const referrals = await Referral.countDocuments({

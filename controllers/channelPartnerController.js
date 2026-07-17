@@ -127,11 +127,23 @@ export const verifyPartner = async (req, res) => {
 
 export const getMyPartnerProfile = async (req, res) => {
   try {
-    const partner = await ChannelPartner.findOne({ user: req.user._id })
+    let partner = await ChannelPartner.findOne({ user: req.user._id })
       .populate('user', 'name email phone city state');
 
     if (!partner) {
-      return res.status(404).json({ success: false, message: 'Partner profile not found' });
+      if (req.user.role === 'channel_partner') {
+        partner = await ChannelPartner.create({
+          user: req.user._id,
+          companyName: `${req.user.name} Co.`,
+          address: req.user.address || '',
+          city: req.user.city || '',
+          state: req.user.state || '',
+        });
+        partner = await ChannelPartner.findOne({ _id: partner._id })
+          .populate('user', 'name email phone city state');
+      } else {
+        return res.status(404).json({ success: false, message: 'Partner profile not found' });
+      }
     }
 
     res.status(200).json({ success: true, data: partner });
