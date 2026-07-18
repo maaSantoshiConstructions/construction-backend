@@ -24,7 +24,6 @@ export const loginValidation = [
 
 export const projectValidation = [
   check('name', 'Project name is required').not().isEmpty().trim(),
-  check('slug', 'Slug is required').not().isEmpty().trim().toLowerCase(),
   check('type', 'Project type is required').not().isEmpty(),
   handleValidationErrors,
 ];

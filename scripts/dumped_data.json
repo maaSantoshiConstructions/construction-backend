@@ -1,0 +1,517 @@
+{
+  "projects": [
+    {
+      "_id": "6a4b435374e0594ab5e89f96",
+      "name": "Green City Phase II",
+      "slug": "green-city-phase-ii",
+      "type": "plotted_development",
+      "description": "",
+      "status": "ongoing",
+      "pricePerSqft": 2800,
+      "images": [],
+      "videos": [],
+      "amenities": [
+        "Landscaped Gardens",
+        "24/7 Security",
+        "Concrete Roads",
+        "Street Lights",
+        "Water Supply",
+        "Electricity"
+      ],
+      "reraNumber": "",
+      "featured": false,
+      "isActive": true,
+      "createdBy": "6a4b3e9c18cf223e7376063d",
+      "totalPlots": 4,
+      "highlights": [
+        "Near Patia Railway Station",
+        "5km from Infocity",
+        "NH-16 Access"
+      ],
+      "location": {
+        "address": "Patia",
+        "city": "Bhubaneswar",
+        "state": "Odisha",
+        "pincode": "751024",
+        "coordinates": {
+          "lat": 20.3025,
+          "lng": 85.8181
+        }
+      },
+      "totalArea": 15
+    },
+    {
+      "_id": "6a4b438174e0594ab5e89f9f",
+      "name": "Green Valley Residency",
+      "slug": "green-valley-residency",
+      "type": "apartments",
+      "description": "Premium residential apartment project featuring spacious 2BHK and 3BHK homes with modern amenities, landscaped gardens, clubhouse, and excellent connectivity to schools, hospitals, and IT parks.",
+      "status": "completed",
+      "pricePerSqft": 5200,
+      "images": [
+        "uploads/1783420570494-Screenshot 2026-06-22 at 11.49.11â¯AM.png",
+        "uploads/1783420927985-pexels-alexander-f-ungerer-157458816-35996694.jpg",
+        "uploads/1783660752614-ChatGPT Image Apr 21, 2026, 08_08_25 AM.png"
+      ],
+      "videos": [],
+      "amenities": [
+        "Parking",
+        "Gym",
+        "Swimming Pool",
+        "Clubhouse",
+        "Security",
+        "Lift",
+        "Garden",
+        "Power Backup"
+      ],
+      "reraNumber": "ORRERA-2026-001245",
+      "featured": false,
+      "isActive": true,
+      "createdBy": "6a4b3e9c18cf223e7376063d",
+      "layoutImage": "",
+      "location": "patia",
+      "totalPlots": 0,
+      "highlights": [],
+      "possessionDate": null,
+      "totalArea": null
+    },
+    {
+      "_id": "6a55d15cba736155395ccf24",
+      "name": "Sunrise Enclave",
+      "slug": "sunrise-enclave",
+      "type": "plotted_development",
+      "location": {
+        "address": "Chandrasekharpur",
+        "city": "Bhubaneswar",
+        "state": "Odisha",
+        "pincode": "751016",
+        "coordinates": {
+          "lat": 20.3333,
+          "lng": 85.8147
+        }
+      },
+      "totalPlots": 3,
+      "totalArea": 8,
+      "status": "ongoing",
+      "pricePerSqft": 3200,
+      "images": [],
+      "videos": [],
+      "amenities": [
+        "Park",
+        "Security",
+        "Concrete Roads",
+        "Drainage",
+        "Street Lights",
+        "Temple"
+      ],
+      "highlights": [
+        "Near DAV School",
+        "Close to Nandankanan",
+        "IT corridor proximity"
+      ],
+      "reraNumber": "ORERA/2024/0012",
+      "featured": true,
+      "isActive": true
+    },
+    {
+      "_id": "6a55d15cba736155395ccf27",
+      "name": "Kalinga Valley",
+      "slug": "kalinga-valley",
+      "type": "plotted_development",
+      "location": {
+        "address": "Khordha Town",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "762001",
+        "coordinates": {
+          "lat": 20.1826,
+          "lng": 85.6153
+        }
+      },
+      "totalPlots": 4,
+      "totalArea": 20,
+      "status": "ongoing",
+      "pricePerSqft": 2200,
+      "images": [],
+      "videos": [],
+      "amenities": [
+        "Garden",
+        "24/7 Security",
+        "Roads",
+        "Water Supply",
+        "Electricity",
+        "Community Hall"
+      ],
+      "highlights": [
+        "10min from Khordha Bus Stand",
+        "Highway facing",
+        "Affordable luxury"
+      ],
+      "reraNumber": "ORERA/2024/0018",
+      "featured": false,
+      "isActive": true
+    },
+    {
+      "_id": "6a55d15cba736155395ccf2a",
+      "name": "Golden Residency",
+      "slug": "golden-residency",
+      "type": "villas",
+      "location": {
+        "address": "Cuttack Road",
+        "city": "Cuttack",
+        "state": "Odisha",
+        "pincode": "753012",
+        "coordinates": {
+          "lat": 20.4625,
+          "lng": 85.883
+        }
+      },
+      "totalPlots": 2,
+      "totalArea": 6,
+      "status": "completed",
+      "pricePerSqft": 3800,
+      "images": [],
+      "videos": [],
+      "amenities": [
+        "Swimming Pool",
+        "Clubhouse",
+        "24/7 Security",
+        "Gym",
+        "Park",
+        "Jogging Track"
+      ],
+      "highlights": [
+        "Premium villa community",
+        "Near Cuttack MC Road",
+        "Ready to move"
+      ],
+      "reraNumber": "ORERA/2023/0045",
+      "featured": false,
+      "isActive": true
+    },
+    {
+      "_id": "6a55d15cba736155395ccf2d",
+      "name": "Sea View Commercial Hub",
+      "slug": "sea-view-commercial",
+      "type": "commercial",
+      "location": {
+        "address": "Puri Beach Road",
+        "city": "Puri",
+        "state": "Odisha",
+        "pincode": "752001",
+        "coordinates": {
+          "lat": 19.8135,
+          "lng": 85.8312
+        }
+      },
+      "totalPlots": 2,
+      "totalArea": 5,
+      "status": "ongoing",
+      "pricePerSqft": 4500,
+      "images": [],
+      "videos": [],
+      "amenities": [
+        "Parking",
+        "24/7 Security",
+        "Power Backup",
+        "Lift",
+        "Fire Safety"
+      ],
+      "highlights": [
+        "Beach Road location",
+        "Tourist area",
+        "High rental yield"
+      ],
+      "reraNumber": "ORERA/2024/0022",
+      "featured": false,
+      "isActive": true
+    }
+  ],
+  "plots": [
+    {
+      "_id": "6a55d15cba736155395ccf30",
+      "plotNumber": "GC-01",
+      "project": "6a4b435374e0594ab5e89f96",
+      "size": 1200,
+      "length": 40,
+      "width": 30,
+      "facing": "North-East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 3360000,
+      "pricePerSqft": 2800,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.302572,
+        "lng": 85.818124
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf31",
+      "plotNumber": "GC-02",
+      "project": "6a4b435374e0594ab5e89f96",
+      "size": 1500,
+      "length": 50,
+      "width": 30,
+      "facing": "East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 4200000,
+      "pricePerSqft": 2800,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.302544,
+        "lng": 85.819137
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf32",
+      "plotNumber": "GC-03",
+      "project": "6a4b435374e0594ab5e89f96",
+      "size": 900,
+      "length": 30,
+      "width": 30,
+      "facing": "South",
+      "roadWidth": 25,
+      "status": "available",
+      "price": 2520000,
+      "pricePerSqft": 2800,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.3025,
+        "lng": 85.820171
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf33",
+      "plotNumber": "GC-04",
+      "project": "6a4b435374e0594ab5e89f96",
+      "size": 1800,
+      "length": 60,
+      "width": 30,
+      "facing": "North",
+      "roadWidth": 40,
+      "status": "available",
+      "price": 5040000,
+      "pricePerSqft": 2800,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.302535,
+        "lng": 85.821135
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf34",
+      "plotNumber": "SE-01",
+      "project": "6a55d15cba736155395ccf24",
+      "size": 1200,
+      "length": 40,
+      "width": 30,
+      "facing": "North-East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 3840000,
+      "pricePerSqft": 3200,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.33334,
+        "lng": 85.814795
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf35",
+      "plotNumber": "SE-02",
+      "project": "6a55d15cba736155395ccf24",
+      "size": 1000,
+      "length": 40,
+      "width": 25,
+      "facing": "West",
+      "roadWidth": 25,
+      "status": "available",
+      "price": 3200000,
+      "pricePerSqft": 3200,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.324334200717285,
+        "lng": 85.81708414748222
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf36",
+      "plotNumber": "SE-03",
+      "project": "6a55d15cba736155395ccf24",
+      "size": 1400,
+      "length": 50,
+      "width": 28,
+      "facing": "North",
+      "roadWidth": 35,
+      "status": "available",
+      "price": 4480000,
+      "pricePerSqft": 3200,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.333374,
+        "lng": 85.816343
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf37",
+      "plotNumber": "KV-01",
+      "project": "6a55d15cba736155395ccf27",
+      "size": 1600,
+      "length": 50,
+      "width": 32,
+      "facing": "East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 3520000,
+      "pricePerSqft": 2200,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.182612,
+        "lng": 85.615309
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf38",
+      "plotNumber": "KV-02",
+      "project": "6a55d15cba736155395ccf27",
+      "size": 1200,
+      "length": 40,
+      "width": 30,
+      "facing": "North-East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 2640000,
+      "pricePerSqft": 2200,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.182673,
+        "lng": 85.616503
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf39",
+      "plotNumber": "KV-03",
+      "project": "6a55d15cba736155395ccf27",
+      "size": 2000,
+      "length": 60,
+      "width": 33,
+      "facing": "South",
+      "roadWidth": 40,
+      "status": "available",
+      "price": 4400000,
+      "pricePerSqft": 2200,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.182647,
+        "lng": 85.617791
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf3a",
+      "plotNumber": "KV-04",
+      "project": "6a55d15cba736155395ccf27",
+      "size": 1000,
+      "length": 40,
+      "width": 25,
+      "facing": "West",
+      "roadWidth": 25,
+      "status": "available",
+      "price": 2200000,
+      "pricePerSqft": 2200,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.182697,
+        "lng": 85.618993
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf3b",
+      "plotNumber": "GR-01",
+      "project": "6a55d15cba736155395ccf2a",
+      "size": 2400,
+      "length": 60,
+      "width": 40,
+      "facing": "North",
+      "roadWidth": 40,
+      "status": "available",
+      "price": 9120000,
+      "pricePerSqft": 3800,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.462593,
+        "lng": 85.883044
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf3c",
+      "plotNumber": "GR-02",
+      "project": "6a55d15cba736155395ccf2a",
+      "size": 1800,
+      "length": 50,
+      "width": 36,
+      "facing": "East",
+      "roadWidth": 35,
+      "status": "available",
+      "price": 6840000,
+      "pricePerSqft": 3800,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 20.462537,
+        "lng": 85.883918
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf3d",
+      "plotNumber": "SC-01",
+      "project": "6a55d15cba736155395ccf2d",
+      "size": 600,
+      "length": 30,
+      "width": 20,
+      "facing": "East",
+      "roadWidth": 30,
+      "status": "available",
+      "price": 2700000,
+      "pricePerSqft": 4500,
+      "corner": true,
+      "isActive": true,
+      "coordinates": {
+        "lat": 19.81351,
+        "lng": 85.831282
+      }
+    },
+    {
+      "_id": "6a55d15cba736155395ccf3e",
+      "plotNumber": "SC-02",
+      "project": "6a55d15cba736155395ccf2d",
+      "size": 800,
+      "length": 40,
+      "width": 20,
+      "facing": "South",
+      "roadWidth": 25,
+      "status": "available",
+      "price": 3600000,
+      "pricePerSqft": 4500,
+      "corner": false,
+      "isActive": true,
+      "coordinates": {
+        "lat": 19.813571,
+        "lng": 85.831951
+      }
+    }
+  ]
+}
