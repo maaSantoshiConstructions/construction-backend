@@ -11,6 +11,11 @@ const SiteVisitSchema = new Schema(
     preferredDate: { type: Date, required: [true, 'Preferred date is required'] },
     preferredTime: String,
     pickupLocation: String,
+    visitType: {
+      type: String,
+      enum: ['physical', 'vr'],
+      default: 'physical',
+    },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'completed', 'cancelled', 'rescheduled'],

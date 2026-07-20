@@ -9,7 +9,7 @@ router.get('/my-documents', protect, getMyDocuments);
 router.get('/', protect, authorize('super_admin', 'company_admin'), getDocuments);
 router.get('/:id', protect, getDocument);
 router.post('/', protect, upload.single('file'), uploadDocument);
-router.put('/:id/verify', protect, authorize('super_admin', 'company_admin'), verifyDocument);
+router.patch('/:id/verify', protect, authorize('super_admin', 'company_admin'), verifyDocument);
 router.delete('/:id', protect, authorize('super_admin', 'company_admin'), deleteDocument);
 
 export default router;
