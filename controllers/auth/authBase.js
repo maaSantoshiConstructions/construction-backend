@@ -1,5 +1,6 @@
 import User from '../../models/User.js';
 import { generateToken, generateRefreshToken, verifyToken } from '../../utils/generateToken.js';
+import sendEmail from '../../utils/email.js';
 
 export const register = async (req, res) => {
   try {
@@ -10,7 +11,6 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
-    // Users are created as verified by default (SMTP/email verification disabled)
     const user = await User.create({
       name,
       email,
@@ -21,6 +21,22 @@ export const register = async (req, res) => {
     });
 
     const token = user.getSignedJwtToken();
+
+    // Send welcome email asynchronously via Nodemailer
+    sendEmail({
+      to: user.email,
+      subject: 'Welcome to Maa Santoshi Constructions!',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px;">
+          <h2 style="color: #c29b38; margin-bottom: 16px;">Welcome to Maa Santoshi Constructions!</h2>
+          <p>Dear <strong>${user.name}</strong>,</p>
+          <p>Thank you for registering with Maa Santoshi Constructions. We are excited to assist you in finding your ideal property.</p>
+          <p>You can now explore premium plots, track construction updates, and schedule site visits directly from your dashboard.</p>
+          <br/>
+          <p style="color: #666; font-size: 14px;">Best regards,<br/><strong>Maa Santoshi Constructions Team</strong></p>
+        </div>
+      `,
+    }).catch((emailErr) => console.error('Welcome email delivery failed:', emailErr.message));
 
     res.status(201).json({
       success: true,
