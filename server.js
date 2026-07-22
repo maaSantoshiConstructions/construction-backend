@@ -3,12 +3,17 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
+
+if (!fs.existsSync('./uploads')) {
+  fs.mkdirSync('./uploads', { recursive: true });
+}
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -78,7 +83,13 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('uploads'), (req, res) => {
+  res.redirect(302, 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200');
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
