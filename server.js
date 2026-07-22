@@ -36,9 +36,27 @@ import reviewRoutes from './routes/reviews.js';
 
 const app = express();
 const httpServer = createServer(app);
+const allowedOrigins = [
+  process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null,
+  'https://maasantoshiconstructions.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/$/, '');
+    if (process.env.FRONTEND_URL === '*' || allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.netlify.app')) {
+      return callback(null, cleanOrigin);
+    }
+    callback(null, cleanOrigin);
+  },
+  credentials: true,
+};
 
 const io = new Server(httpServer, {
-  cors: { origin: process.env.FRONTEND_URL || '*', methods: ['GET', 'POST'] }
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true }
 });
 
 io.on('connection', (socket) => {
@@ -55,7 +73,7 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
+app.use(cors(corsOptions));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
