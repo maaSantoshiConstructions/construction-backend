@@ -87,9 +87,7 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static('uploads'), (req, res) => {
-  res.redirect(302, 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200');
-});
+}, express.static('uploads'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
