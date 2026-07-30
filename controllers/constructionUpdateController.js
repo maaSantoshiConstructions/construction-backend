@@ -135,18 +135,24 @@ export const getProjectUpdates = async (req, res) => {
 
 export const getMyPlotUpdates = async (req, res) => {
   try {
+    let updates = [];
     const customer = await Customer.findOne({ user: req.user._id });
-    if (!customer || !customer.plot) {
-      return res.status(404).json({ success: false, message: 'No plot found for your account' });
+    if (customer && customer.plot) {
+      updates = await ConstructionUpdate.find({
+        plot: customer.plot,
+        isActive: true,
+      })
+        .sort('-date -createdAt')
+        .populate('project', 'name slug')
+        .populate('updatedBy', 'name');
     }
 
-    const updates = await ConstructionUpdate.find({
-      plot: customer.plot,
-      isActive: true,
-    })
-      .sort('-date')
-      .populate('project', 'name slug')
-      .populate('updatedBy', 'name');
+    if (updates.length === 0) {
+      updates = await ConstructionUpdate.find({ isActive: true })
+        .sort('-date -createdAt')
+        .populate('project', 'name slug')
+        .populate('updatedBy', 'name');
+    }
 
     res.status(200).json({
       success: true,

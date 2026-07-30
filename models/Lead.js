@@ -19,7 +19,7 @@ const LeadSchema = new Schema(
     source: {
       type: String,
       enum: {
-        values: ['website', 'website_contact', 'whatsapp', 'referral', 'walk_in', 'phone_call', 'social_media', 'other'],
+        values: ['website', 'website_contact', 'website_register', 'whatsapp', 'referral', 'customer_referral', 'walk_in', 'phone_call', 'social_media', 'other'],
         message: '{VALUE} is not a valid lead source',
       },
       required: [true, 'Lead source is required'],
@@ -27,6 +27,12 @@ const LeadSchema = new Schema(
     project: { type: Schema.Types.ObjectId, ref: 'Project' },
     plot: { type: Schema.Types.ObjectId, ref: 'Plot' },
     assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    referralCode: { type: String, trim: true },
+    referrerInfo: {
+      name: String,
+      phone: String,
+    },
     status: {
       type: String,
       enum: ['new', 'contacted', 'interested', 'site_visit_done', 'negotiation', 'booking_done', 'lost'],

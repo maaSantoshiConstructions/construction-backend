@@ -1,4 +1,5 @@
 import User from '../../models/User.js';
+import Lead from '../../models/Lead.js';
 import { generateToken, generateRefreshToken, verifyToken } from '../../utils/generateToken.js';
 import sendEmail from '../../utils/email.js';
 
@@ -19,6 +20,20 @@ export const register = async (req, res) => {
       role: role || 'customer',
       isVerified: true,
     });
+
+    // Auto-create lead so newly registered user shows in Manage Leads dashboard
+    try {
+      await Lead.create({
+        name: user.name,
+        email: user.email,
+        phone: user.phone || undefined,
+        source: 'website_register',
+        status: 'new',
+        notes: [`Registered as new ${user.role || 'customer'} on website`],
+      });
+    } catch (leadErr) {
+      console.error('Lead creation for registered user failed:', leadErr.message);
+    }
 
     const token = user.getSignedJwtToken();
 

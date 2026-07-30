@@ -12,9 +12,36 @@ import {
 
 export const getLeads = async (req, res) => {
   try {
+    // Auto-sync registered customer users to leads if missing
+    try {
+      const customers = await User.find({ role: 'customer', isActive: true });
+      for (const cust of customers) {
+        const query = [];
+        if (cust.email) query.push({ email: cust.email });
+        if (cust.phone) query.push({ phone: cust.phone });
+        if (query.length > 0) {
+          const exists = await Lead.findOne({ $or: query });
+          if (!exists) {
+            await Lead.create({
+              name: cust.name,
+              email: cust.email,
+              phone: cust.phone || undefined,
+              source: 'website_register',
+              status: 'new',
+              notes: ['Registered customer on website'],
+            });
+          }
+        }
+      }
+    } catch (syncErr) {
+      console.error('Customer lead sync warning:', syncErr.message);
+    }
+
     const filter = { isActive: true };
     if (req.user.role === 'channel_partner') {
       filter.assignedTo = req.user._id;
+    } else if (req.user.role === 'customer') {
+      filter.referredBy = req.user._id;
     }
 
     const features = new APIFeatures(Lead.find(filter), req.query)
@@ -26,6 +53,7 @@ export const getLeads = async (req, res) => {
 
     const leads = await features.query
       .populate('assignedTo', 'name email')
+      .populate('referredBy', 'name email phone referralCode')
       .populate('project', 'name slug');
 
     const total = await Lead.countDocuments(filter);
@@ -45,6 +73,7 @@ export const getLead = async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id)
       .populate('assignedTo', 'name email')
+      .populate('referredBy', 'name email phone referralCode')
       .populate('project', 'name slug')
       .populate('plot', 'plotNumber');
 
@@ -69,7 +98,11 @@ export const createLead = async (req, res) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        leadData.assignedTo = decoded.id;
+        if (leadData.source === 'customer_referral' || leadData.source === 'referral') {
+          leadData.referredBy = decoded.id;
+        } else {
+          leadData.assignedTo = decoded.id;
+        }
       } catch (err) {
         // Ignore token verify error for public contact form submissions
       }
@@ -258,7 +291,7 @@ export const sendLeadEmail = async (req, res) => {
         contentType: req.file.mimetype,
       });
       documentHtml = getAttachmentCardHtml(req.file.originalname);
-    } 
+    }
     // 2. Preset document if selected
     else if (presetFile && presetFile !== 'none') {
       let fileName = 'Project_Brochure_Maa_Santoshi.pdf';
