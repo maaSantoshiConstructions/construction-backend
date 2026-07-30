@@ -1,6 +1,6 @@
 import Lead from '../models/Lead.js';
+import User from '../models/User.js';
 import APIFeatures from '../utils/apiFeatures.js';
-import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/email.js';
 import path from 'path';
 import fs from 'fs';
@@ -28,7 +28,6 @@ export const getLeads = async (req, res) => {
               phone: cust.phone || undefined,
               source: 'website_register',
               status: 'new',
-              notes: ['Registered customer on website'],
             });
           }
         }
@@ -38,12 +37,6 @@ export const getLeads = async (req, res) => {
     }
 
     const filter = { isActive: true };
-    if (req.user.role === 'channel_partner') {
-      filter.assignedTo = req.user._id;
-    } else if (req.user.role === 'customer') {
-      filter.referredBy = req.user._id;
-    }
-
     const features = new APIFeatures(Lead.find(filter), req.query)
       .search(['name', 'email', 'phone'])
       .filter()
@@ -51,11 +44,7 @@ export const getLeads = async (req, res) => {
       .limitFields()
       .paginate();
 
-    const leads = await features.query
-      .populate('assignedTo', 'name email')
-      .populate('referredBy', 'name email phone referralCode')
-      .populate('project', 'name slug');
-
+    const leads = await features.query;
     const total = await Lead.countDocuments(filter);
 
     res.status(200).json({
@@ -71,11 +60,7 @@ export const getLeads = async (req, res) => {
 
 export const getLead = async (req, res) => {
   try {
-    const lead = await Lead.findById(req.params.id)
-      .populate('assignedTo', 'name email')
-      .populate('referredBy', 'name email phone referralCode')
-      .populate('project', 'name slug')
-      .populate('plot', 'plotNumber');
+    const lead = await Lead.findById(req.params.id);
 
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
@@ -90,24 +75,6 @@ export const getLead = async (req, res) => {
 export const createLead = async (req, res) => {
   try {
     const leadData = { ...req.body };
-
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (leadData.source === 'customer_referral' || leadData.source === 'referral') {
-          leadData.referredBy = decoded.id;
-        } else {
-          leadData.assignedTo = decoded.id;
-        }
-      } catch (err) {
-        // Ignore token verify error for public contact form submissions
-      }
-    }
-
     const lead = await Lead.create(leadData);
 
     // Send confirmation email asynchronously via Nodemailer
@@ -117,7 +84,7 @@ export const createLead = async (req, res) => {
         subject: 'Thank you for your inquiry - Maa Santoshi Constructions',
         html: getInquiryEmailHtml({
           leadName: lead.name,
-          requirement: lead.notes || lead.requirement,
+          requirement: lead.requirement || 'Plot Inquiry',
         }),
       }).catch((emailErr) => console.error('Inquiry confirmation email delivery failed:', emailErr.message));
     }
@@ -133,9 +100,7 @@ export const updateLead = async (req, res) => {
     const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    })
-      .populate('assignedTo', 'name email')
-      .populate('project', 'name slug');
+    });
 
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
@@ -149,18 +114,10 @@ export const updateLead = async (req, res) => {
 
 export const assignLead = async (req, res) => {
   try {
-    const { assignedTo } = req.body;
-
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      { assignedTo },
-      { new: true, runValidators: true }
-    ).populate('assignedTo', 'name email');
-
+    const lead = await Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
-
     res.status(200).json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -170,7 +127,7 @@ export const assignLead = async (req, res) => {
 export const getMyLeads = async (req, res) => {
   try {
     const features = new APIFeatures(
-      Lead.find({ assignedTo: req.user._id, isActive: true }),
+      Lead.find({ isActive: true }),
       req.query
     )
       .filter()
@@ -178,9 +135,8 @@ export const getMyLeads = async (req, res) => {
       .limitFields()
       .paginate();
 
-    const leads = await features.query.populate('project', 'name slug');
-
-    const total = await Lead.countDocuments({ assignedTo: req.user._id, isActive: true });
+    const leads = await features.query;
+    const total = await Lead.countDocuments({ isActive: true });
 
     res.status(200).json({
       success: true,
@@ -222,27 +178,10 @@ export const getLeadStats = async (req, res) => {
 
 export const addNote = async (req, res) => {
   try {
-    const { note } = req.body;
-
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      {
-        $push: {
-          notes: note,
-          conversationLog: {
-            message: note,
-            by: req.user._id,
-            date: new Date(),
-          },
-        },
-      },
-      { new: true }
-    );
-
+    const lead = await Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
-
     res.status(200).json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -269,7 +208,7 @@ export const deleteLead = async (req, res) => {
 
 export const sendLeadEmail = async (req, res) => {
   try {
-    const { subject, message, channel, presetFile } = req.body;
+    const { subject, message, presetFile } = req.body;
     const lead = await Lead.findById(req.params.id);
 
     if (!lead) {
@@ -283,7 +222,6 @@ export const sendLeadEmail = async (req, res) => {
     const attachments = [];
     let documentHtml = '';
 
-    // 1. Manually uploaded file via Multer
     if (req.file) {
       attachments.push({
         filename: req.file.originalname,
@@ -291,9 +229,7 @@ export const sendLeadEmail = async (req, res) => {
         contentType: req.file.mimetype,
       });
       documentHtml = getAttachmentCardHtml(req.file.originalname);
-    }
-    // 2. Preset document if selected
-    else if (presetFile && presetFile !== 'none') {
+    } else if (presetFile && presetFile !== 'none') {
       let fileName = 'Project_Brochure_Maa_Santoshi.pdf';
       let docTitle = 'Project Brochure & Pricing Plan.pdf';
 
@@ -314,7 +250,6 @@ export const sendLeadEmail = async (req, res) => {
       documentHtml = getAttachmentCardHtml(docTitle);
     }
 
-    // Send email via Nodemailer
     await sendEmail({
       to: lead.email,
       subject: subject || 'Follow-up from Maa Santoshi Constructions',
@@ -326,20 +261,9 @@ export const sendLeadEmail = async (req, res) => {
       attachments,
     });
 
-    const noteText = `[AI Follow-up: ${channel || 'Email'}] Sent: "${message}" ${attachments.length > 0 ? `(Attached: ${attachments[0].filename})` : ''}`;
-    lead.notes.push(noteText);
-    lead.conversationLog.push({
-      message: noteText,
-      by: req.user?._id,
-      date: new Date(),
-    });
-    await lead.save();
-
     res.status(200).json({
       success: true,
-      message: `Email successfully sent to ${lead.email}${attachments.length > 0 ? ` with attachment "${attachments[0].filename}"` : ''}`,
-      attached: attachments.length > 0,
-      attachedFileName: attachments.length > 0 ? attachments[0].filename : null,
+      message: `Email successfully sent to ${lead.email}`,
       data: lead,
     });
   } catch (error) {
