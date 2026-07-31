@@ -150,6 +150,9 @@ export const createBooking = async (req, res) => {
       totalAmount,
       paymentPlan,
       remarks,
+      paymentMethod,
+      referenceNumber,
+      paymentDate,
     } = req.body;
 
     const plot = await Plot.findById(plotId);
@@ -160,7 +163,7 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Plot is not available for booking' });
     }
 
-    const initialPaid = tokenAmount && tokenAmount > 0 ? Number(tokenAmount) : 0;
+    const initialPaid = tokenAmount && Number(tokenAmount) > 0 ? Number(tokenAmount) : 0;
 
     const booking = await Booking.create({
       customer: customer || req.user._id,
@@ -192,6 +195,11 @@ export const createBooking = async (req, res) => {
 
     // Auto-create token payment record if token amount provided
     if (initialPaid > 0) {
+      const pMethod = paymentMethod || 'cash';
+      const refNum = pMethod === 'cash' ? undefined : (referenceNumber || undefined);
+      const pDate = paymentDate ? new Date(paymentDate) : new Date();
+      const receiptUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
       await Payment.create({
         booking: booking._id,
         customer: customer || req.user._id,
@@ -199,14 +207,16 @@ export const createBooking = async (req, res) => {
         plot: plotId,
         amount: initialPaid,
         paymentType: 'token',
-        paymentMethod: req.body.paymentMethod || 'cash',
+        paymentMethod: pMethod,
+        referenceNumber: refNum,
         transactionStatus: 'success',
-        paidAt: new Date(),
+        paidAt: pDate,
+        receiptUrl,
         remarks: 'Token amount collected during booking registration.',
         collectedBy: req.user._id,
       });
 
-      booking.lastPaymentDate = new Date();
+      booking.lastPaymentDate = pDate;
       await booking.save();
     }
 

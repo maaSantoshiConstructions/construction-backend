@@ -41,7 +41,7 @@ const PaymentSchema = new Schema(
     // Transaction lifecycle status
     transactionStatus: {
       type: String,
-      enum: ['pending', 'success', 'failed', 'cancelled', 'refunded'],
+      enum: ['success', 'cancelled', 'refunded'],
       default: 'success',
     },
 
@@ -71,10 +71,32 @@ PaymentSchema.index({ createdAt: 1 });
 // ─── Auto-generate paymentId ──────────────────────────────────────────────────
 PaymentSchema.pre('save', async function (next) {
   if (!this.paymentId) {
-    // Generate sequential-style ID: PAY-000001
-    const count = await this.constructor.countDocuments();
-    const padded = String(count + 1).padStart(6, '0');
-    this.paymentId = `PAY-${padded}`;
+    try {
+      // Find the payment with the highest sequential number
+      const lastPayment = await this.constructor
+        .findOne({ paymentId: { $regex: /^PAY-\d+$/ } })
+        .sort({ createdAt: -1 });
+
+      let nextNum = 1;
+      if (lastPayment && lastPayment.paymentId) {
+        const parts = lastPayment.paymentId.split('-');
+        if (parts.length === 2 && !isNaN(parts[1])) {
+          nextNum = parseInt(parts[1], 10) + 1;
+        }
+      }
+
+      // Check existence loop to eliminate any duplicate key errors
+      let candidate = `PAY-${String(nextNum).padStart(6, '0')}`;
+      while (await this.constructor.exists({ paymentId: candidate })) {
+        nextNum++;
+        candidate = `PAY-${String(nextNum).padStart(6, '0')}`;
+      }
+
+      this.paymentId = candidate;
+    } catch (err) {
+      const fallbackNum = await this.constructor.countDocuments();
+      this.paymentId = `PAY-${String(fallbackNum + 1).padStart(6, '0')}`;
+    }
   }
   next();
 });

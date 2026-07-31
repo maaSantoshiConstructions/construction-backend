@@ -12,6 +12,7 @@ import {
   getBookingStats,
 } from '../controllers/bookingController.js';
 import { protect, authorize } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ router.get('/my-bookings', protect, getMyBookings);
 // Admin / staff routes
 router.get('/', protect, authorize('super_admin', 'company_admin', 'sales_executive'), getBookings);
 router.get('/stats', protect, authorize('super_admin', 'company_admin'), getBookingStats);
-router.post('/', protect, createBooking);
+router.post('/', protect, upload.single('receipt'), createBooking);
 
 // Single booking — detail & summary
 router.get('/:id', protect, getBooking);
