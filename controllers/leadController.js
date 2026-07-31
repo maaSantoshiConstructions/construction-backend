@@ -114,7 +114,13 @@ export const updateLead = async (req, res) => {
 
 export const assignLead = async (req, res) => {
   try {
-    const lead = await Lead.findById(req.params.id);
+    const { assignedTo } = req.body;
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { assignedTo },
+      { new: true, runValidators: true }
+    ).populate('assignedTo', 'name email');
+
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
@@ -126,8 +132,9 @@ export const assignLead = async (req, res) => {
 
 export const getMyLeads = async (req, res) => {
   try {
+    const filter = { isActive: true, assignedTo: req.user._id };
     const features = new APIFeatures(
-      Lead.find({ isActive: true }),
+      Lead.find(filter),
       req.query
     )
       .filter()
@@ -136,7 +143,7 @@ export const getMyLeads = async (req, res) => {
       .paginate();
 
     const leads = await features.query;
-    const total = await Lead.countDocuments({ isActive: true });
+    const total = await Lead.countDocuments(filter);
 
     res.status(200).json({
       success: true,
@@ -178,10 +185,16 @@ export const getLeadStats = async (req, res) => {
 
 export const addNote = async (req, res) => {
   try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ success: false, message: 'Note text is required' });
+    }
     const lead = await Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
+    lead.notes.push({ text, createdBy: req.user?._id });
+    await lead.save();
     res.status(200).json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
