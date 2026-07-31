@@ -3,21 +3,6 @@ import crypto from 'crypto';
 
 const { Schema, model } = mongoose;
 
-const InstallmentSchema = new Schema(
-  {
-    amount: { type: Number, required: true, min: 0 },
-    dueDate: { type: Date, required: true },
-    paidDate: Date,
-    status: {
-      type: String,
-      enum: ['pending', 'paid', 'overdue'],
-      default: 'pending',
-    },
-    receiptUrl: String,
-  },
-  { _id: false }
-);
-
 const BookingSchema = new Schema(
   {
     bookingId: {
@@ -30,19 +15,35 @@ const BookingSchema = new Schema(
     salesExecutive: { type: Schema.Types.ObjectId, ref: 'User' },
     channelPartner: { type: Schema.Types.ObjectId, ref: 'User' },
     bookingDate: { type: Date, default: Date.now },
-    status: {
+
+    // Booking lifecycle status — independent of payment
+    bookingStatus: {
       type: String,
-      enum: ['token', 'partial', 'completed', 'cancelled'],
-      default: 'token',
+      enum: ['active', 'completed', 'cancelled'],
+      default: 'active',
     },
-    tokenAmount: { type: Number, min: 0 },
-    totalAmount: { type: Number, required: [true, 'Total amount is required'], min: 0 },
+
+    // Payment financial status — system-calculated only, never set manually
+    paymentStatus: {
+      type: String,
+      enum: ['token_paid', 'partially_paid', 'fully_paid', 'refunded'],
+      default: 'token_paid',
+    },
+
     paymentPlan: {
       type: String,
       enum: ['full_payment', 'installment', 'loan'],
       default: 'full_payment',
     },
-    installments: [InstallmentSchema],
+
+    totalAmount: { type: Number, required: [true, 'Total amount is required'], min: 0 },
+    tokenAmount: { type: Number, min: 0, default: 0 },
+
+    // System-maintained payment totals — updated automatically on every payment event
+    paidAmount: { type: Number, default: 0, min: 0 },
+    remainingAmount: { type: Number, default: 0, min: 0 },
+    lastPaymentDate: { type: Date },
+
     documents: [String],
     remarks: String,
     isActive: { type: Boolean, default: true },
@@ -50,11 +51,14 @@ const BookingSchema = new Schema(
   { timestamps: true }
 );
 
+// ─── Indexes ─────────────────────────────────────────────────────────────────
 BookingSchema.index({ customer: 1 });
 BookingSchema.index({ plot: 1 });
 BookingSchema.index({ project: 1 });
-BookingSchema.index({ status: 1 });
+BookingSchema.index({ bookingStatus: 1 });
+BookingSchema.index({ paymentStatus: 1 });
 
+// ─── Auto-generate bookingId ──────────────────────────────────────────────────
 BookingSchema.pre('save', function (next) {
   if (!this.bookingId) {
     this.bookingId = `BK-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
@@ -62,17 +66,43 @@ BookingSchema.pre('save', function (next) {
   next();
 });
 
-// Helper function to update associated plot
-const updateAssociatedPlot = async (bookingDoc) => {
+// ─── Instance method: calculate paymentStatus from amounts ───────────────────
+BookingSchema.methods.calculatePaymentStatus = function () {
+  const { paidAmount, tokenAmount, totalAmount } = this;
+
+  if (paidAmount <= 0) return 'token_paid';
+  if (paidAmount <= tokenAmount) return 'token_paid';
+  if (paidAmount < totalAmount) return 'partially_paid';
+  if (paidAmount >= totalAmount) return 'fully_paid';
+  return 'token_paid';
+};
+
+// ─── Pre-save hook: auto-calculate remainingAmount and paymentStatus ─────────
+BookingSchema.pre('save', function (next) {
+  // Ensure paidAmount is never negative
+  if (this.paidAmount < 0) this.paidAmount = 0;
+
+  // Recalculate remaining
+  this.remainingAmount = Math.max(0, this.totalAmount - this.paidAmount);
+
+  // Auto-set paymentStatus based on amounts
+  this.paymentStatus = this.calculatePaymentStatus();
+
+  next();
+});
+
+// ─── Helper: sync associated Plot status ─────────────────────────────────────
+const syncPlotStatus = async (bookingDoc) => {
   const Plot = mongoose.model('Plot');
+
   let plotStatus = 'available';
   let owner = null;
 
-  if (bookingDoc.isActive) {
-    if (bookingDoc.status === 'completed') {
+  if (bookingDoc.isActive && bookingDoc.bookingStatus !== 'cancelled') {
+    if (bookingDoc.bookingStatus === 'completed') {
       plotStatus = 'sold';
       owner = bookingDoc.customer;
-    } else if (bookingDoc.status === 'token' || bookingDoc.status === 'partial') {
+    } else if (bookingDoc.bookingStatus === 'active') {
       plotStatus = 'reserved';
       owner = bookingDoc.customer;
     }
@@ -81,19 +111,19 @@ const updateAssociatedPlot = async (bookingDoc) => {
   await Plot.findByIdAndUpdate(bookingDoc.plot, {
     status: plotStatus,
     owner: owner,
-    booking: bookingDoc.isActive && bookingDoc.status !== 'cancelled' ? bookingDoc._id : null,
+    booking: bookingDoc.isActive && bookingDoc.bookingStatus !== 'cancelled' ? bookingDoc._id : null,
   });
 };
 
-// Post save hook
+// ─── Post-save hook: sync plot status ────────────────────────────────────────
 BookingSchema.post('save', async function () {
-  await updateAssociatedPlot(this);
+  await syncPlotStatus(this);
 });
 
-// Post findOneAndUpdate hook
+// ─── Post-findOneAndUpdate hook: sync plot status ─────────────────────────────
 BookingSchema.post(/^findOneAndUpdate/, async function (doc) {
   if (doc) {
-    await updateAssociatedPlot(doc);
+    await syncPlotStatus(doc);
   }
 });
 
