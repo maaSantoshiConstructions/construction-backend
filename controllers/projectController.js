@@ -35,24 +35,54 @@ const sanitizeProjectInput = (body) => {
       delete data[key];
     }
   });
-  if (data.name && !data.slug) {
-    data.slug = data.name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-  }
   return data;
+};
+
+const generateUniqueSlug = async (name, currentSlug, projectId = null) => {
+  let baseSlug = (currentSlug || name || 'project')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+
+  if (!baseSlug) baseSlug = 'project';
+
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  while (true) {
+    const query = { slug: uniqueSlug };
+    if (projectId) {
+      query._id = { $ne: projectId };
+    }
+    const existing = await Project.findOne(query);
+    if (!existing) break;
+
+    uniqueSlug = `${baseSlug}-${counter}`;
+    counter++;
+    if (counter > 20) {
+      uniqueSlug = `${baseSlug}-${crypto.randomBytes(2).toString('hex')}`;
+      break;
+    }
+  }
+
+  return uniqueSlug;
 };
 
 export const createProject = asyncHandler(async (req, res) => {
   const sanitized = sanitizeProjectInput(req.body);
+  sanitized.slug = await generateUniqueSlug(sanitized.name, sanitized.slug);
+
   const project = await Project.create({ ...sanitized, createdBy: req.user?._id });
   sendSuccess(res, project, null, 201);
 });
 
 export const updateProject = asyncHandler(async (req, res) => {
   const sanitized = sanitizeProjectInput(req.body);
+  if (sanitized.name || sanitized.slug) {
+    sanitized.slug = await generateUniqueSlug(sanitized.name, sanitized.slug, req.params.id);
+  }
+
   const project = await Project.findByIdAndUpdate(req.params.id, sanitized, {
     new: true,
     runValidators: true,
