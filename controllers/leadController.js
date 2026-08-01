@@ -4,6 +4,8 @@ import APIFeatures from '../utils/apiFeatures.js';
 import sendEmail from '../utils/email.js';
 import path from 'path';
 import fs from 'fs';
+import asyncHandler from '../middleware/asyncHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
 import {
   getInquiryEmailHtml,
   getFollowupEmailHtml,
@@ -58,19 +60,15 @@ export const getLeads = async (req, res) => {
   }
 };
 
-export const getLead = async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
+export const getLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.findById(req.params.id);
 
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found' });
-    }
-
-    res.status(200).json({ success: true, data: lead });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!lead) {
+    return res.status(404).json({ success: false, message: 'Lead not found' });
   }
-};
+
+  sendSuccess(res, lead);
+});
 
 export const createLead = async (req, res) => {
   try {
@@ -95,22 +93,18 @@ export const createLead = async (req, res) => {
   }
 };
 
-export const updateLead = async (req, res) => {
-  try {
-    const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+export const updateLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found' });
-    }
-
-    res.status(200).json({ success: true, data: lead });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!lead) {
+    return res.status(404).json({ success: false, message: 'Lead not found' });
   }
-};
+
+  sendSuccess(res, lead);
+});
 
 export const assignLead = async (req, res) => {
   try {
@@ -201,23 +195,19 @@ export const addNote = async (req, res) => {
   }
 };
 
-export const deleteLead = async (req, res) => {
-  try {
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+export const deleteLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.findByIdAndUpdate(
+    req.params.id,
+    { isActive: false },
+    { new: true }
+  );
 
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found' });
-    }
-
-    res.status(200).json({ success: true, message: 'Lead deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!lead) {
+    return res.status(404).json({ success: false, message: 'Lead not found' });
   }
-};
+
+  sendSuccess(res, null, 'Lead deleted successfully');
+});
 
 export const sendLeadEmail = async (req, res) => {
   try {

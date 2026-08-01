@@ -1,96 +1,64 @@
 import Project from '../models/Project.js';
 import Plot from '../models/Plot.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import asyncHandler from '../middleware/asyncHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
 
-export const getProjects = async (req, res) => {
-  try {
-    const features = new APIFeatures(Project.find({ isActive: true }), req.query)
-      .search(['name', 'description', 'location.address'])
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
+export const getProjects = asyncHandler(async (req, res) => {
+  const features = new APIFeatures(Project.find({ isActive: true }), req.query)
+    .search(['name', 'description', 'location.address'])
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
 
-    const projects = await features.query;
-    const total = await Project.countDocuments({ isActive: true });
+  const projects = await features.query;
+  const total = await Project.countDocuments({ isActive: true });
+  sendPaginated(res, projects, total, req.query.page, req.query.limit);
+});
 
-    res.status(200).json({
-      success: true,
-      count: projects.length,
-      total,
-      data: projects,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+export const getProject = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ slug: req.params.slug, isActive: true });
+
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found' });
   }
-};
 
-export const getProject = async (req, res) => {
-  try {
-    const project = await Project.findOne({ slug: req.params.slug, isActive: true });
+  const plotsCount = await Plot.countDocuments({ project: project._id, isActive: true });
+  sendSuccess(res, { ...project.toObject(), plotsCount });
+});
 
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
+export const createProject = asyncHandler(async (req, res) => {
+  const project = await Project.create({ ...req.body, createdBy: req.user._id });
+  sendSuccess(res, project, null, 201);
+});
 
-    const plotsCount = await Plot.countDocuments({ project: project._id, isActive: true });
+export const updateProject = asyncHandler(async (req, res) => {
+  const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
-    res.status(200).json({
-      success: true,
-      data: {
-        ...project.toObject(),
-        plotsCount,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found' });
   }
-};
 
-export const createProject = async (req, res) => {
-  try {
-    const project = await Project.create({ ...req.body, createdBy: req.user._id });
+  sendSuccess(res, project);
+});
 
-    res.status(201).json({ success: true, data: project });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+export const deleteProject = asyncHandler(async (req, res) => {
+  const project = await Project.findByIdAndUpdate(
+    req.params.id,
+    { isActive: false },
+    { new: true }
+  );
+
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found' });
   }
-};
 
-export const updateProject = async (req, res) => {
-  try {
-    const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
-
-    res.status(200).json({ success: true, data: project });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const deleteProject = async (req, res) => {
-  try {
-    const project = await Project.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found' });
-    }
-
-    res.status(200).json({ success: true, message: 'Project deactivated successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+  sendSuccess(res, null, 'Project deactivated successfully');
+});
 
 export const uploadProjectImages = async (req, res) => {
   try {

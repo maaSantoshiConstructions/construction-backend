@@ -1,6 +1,9 @@
 import Plot from '../models/Plot.js';
 import Project from '../models/Project.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import asyncHandler from '../middleware/asyncHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
+import { POPULATE_PROJECT_FULL, POPULATE_CUSTOMER_BASIC } from '../utils/populateHelper.js';
 
 export const getPlots = async (req, res) => {
   try {
@@ -54,48 +57,35 @@ export const getPlots = async (req, res) => {
   }
 };
 
-export const getPlot = async (req, res) => {
-  try {
-    const plot = await Plot.findById(req.params.id)
-      .populate('project', 'name slug type location')
-      .populate('owner', 'name email phone');
+export const getPlot = asyncHandler(async (req, res) => {
+  const plot = await Plot.findById(req.params.id)
+    .populate(POPULATE_PROJECT_FULL)
+    .populate(POPULATE_CUSTOMER_BASIC);
 
-    if (!plot) {
-      return res.status(404).json({ success: false, message: 'Plot not found' });
-    }
-
-    res.status(200).json({ success: true, data: plot });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!plot) {
+    return res.status(404).json({ success: false, message: 'Plot not found' });
   }
-};
 
-export const createPlot = async (req, res) => {
-  try {
-    const plot = await Plot.create(req.body);
+  sendSuccess(res, plot);
+});
 
-    res.status(201).json({ success: true, data: plot });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+export const createPlot = asyncHandler(async (req, res) => {
+  const plot = await Plot.create(req.body);
+  sendSuccess(res, plot, null, 201);
+});
+
+export const updatePlot = asyncHandler(async (req, res) => {
+  const plot = await Plot.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  }).populate('project', 'name slug type');
+
+  if (!plot) {
+    return res.status(404).json({ success: false, message: 'Plot not found' });
   }
-};
 
-export const updatePlot = async (req, res) => {
-  try {
-    const plot = await Plot.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate('project', 'name slug type');
-
-    if (!plot) {
-      return res.status(404).json({ success: false, message: 'Plot not found' });
-    }
-
-    res.status(200).json({ success: true, data: plot });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+  sendSuccess(res, plot);
+});
 
 export const deletePlot = async (req, res) => {
   try {
