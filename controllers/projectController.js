@@ -28,13 +28,32 @@ export const getProject = asyncHandler(async (req, res) => {
   sendSuccess(res, { ...project.toObject(), plotsCount });
 });
 
+const sanitizeProjectInput = (body) => {
+  const data = { ...body };
+  ['pricePerSqft', 'totalPlots', 'totalArea', 'possessionDate'].forEach((key) => {
+    if (data[key] === null || data[key] === '' || data[key] === undefined) {
+      delete data[key];
+    }
+  });
+  if (data.name && !data.slug) {
+    data.slug = data.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  }
+  return data;
+};
+
 export const createProject = asyncHandler(async (req, res) => {
-  const project = await Project.create({ ...req.body, createdBy: req.user._id });
+  const sanitized = sanitizeProjectInput(req.body);
+  const project = await Project.create({ ...sanitized, createdBy: req.user?._id });
   sendSuccess(res, project, null, 201);
 });
 
 export const updateProject = asyncHandler(async (req, res) => {
-  const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+  const sanitized = sanitizeProjectInput(req.body);
+  const project = await Project.findByIdAndUpdate(req.params.id, sanitized, {
     new: true,
     runValidators: true,
   });
