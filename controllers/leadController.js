@@ -70,9 +70,23 @@ export const getLead = asyncHandler(async (req, res) => {
   sendSuccess(res, lead);
 });
 
+const normalizeNotesInput = (notes, userId) => {
+  if (!notes) return undefined;
+  if (typeof notes === 'string') {
+    return [{ text: notes, createdBy: userId }];
+  }
+  if (Array.isArray(notes)) {
+    return notes.map((n) => (typeof n === 'string' ? { text: n, createdBy: userId } : n));
+  }
+  return notes;
+};
+
 export const createLead = async (req, res) => {
   try {
     const leadData = { ...req.body };
+    if (leadData.notes) {
+      leadData.notes = normalizeNotesInput(leadData.notes, req.user?._id);
+    }
     const lead = await Lead.create(leadData);
 
     // Send confirmation email asynchronously via Nodemailer
@@ -94,7 +108,11 @@ export const createLead = async (req, res) => {
 };
 
 export const updateLead = asyncHandler(async (req, res) => {
-  const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+  const updateData = { ...req.body };
+  if (updateData.notes) {
+    updateData.notes = normalizeNotesInput(updateData.notes, req.user?._id);
+  }
+  const lead = await Lead.findByIdAndUpdate(req.params.id, updateData, {
     new: true,
     runValidators: true,
   });

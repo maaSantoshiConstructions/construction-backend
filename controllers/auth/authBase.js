@@ -29,7 +29,7 @@ export const register = async (req, res) => {
         phone: user.phone || undefined,
         source: 'website_register',
         status: 'new',
-        notes: [`Registered as new ${user.role || 'customer'} on website`],
+        notes: [{ text: `Registered as new ${user.role || 'customer'} on website` }],
       });
     } catch (leadErr) {
       console.error('Lead creation for registered user failed:', leadErr.message);

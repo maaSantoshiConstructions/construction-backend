@@ -52,6 +52,16 @@ const LeadSchema = new Schema(
   { timestamps: true }
 );
 
+// ─── Pre-validate hook: normalize notes (string or array of strings -> subdocument array) ──
+LeadSchema.pre('validate', function (next) {
+  if (typeof this.notes === 'string') {
+    this.notes = [{ text: this.notes }];
+  } else if (Array.isArray(this.notes)) {
+    this.notes = this.notes.map((n) => (typeof n === 'string' ? { text: n } : n));
+  }
+  next();
+});
+
 LeadSchema.index({ email: 1 });
 LeadSchema.index({ phone: 1 });
 LeadSchema.index({ status: 1 });
