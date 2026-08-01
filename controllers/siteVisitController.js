@@ -2,64 +2,56 @@ import SiteVisit from '../models/SiteVisit.js';
 import sendEmail from '../utils/email.js';
 import APIFeatures from '../utils/apiFeatures.js';
 import Notification from '../models/Notification.js';
+import asyncHandler from '../middleware/asyncHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
+import {
+  POPULATE_CUSTOMER_BASIC,
+  POPULATE_PLOT_BASIC,
+  POPULATE_PLOT_FULL,
+  POPULATE_PROJECT_BASIC,
+  POPULATE_PROJECT_FULL,
+  POPULATE_STAFF_BASIC,
+} from '../utils/populateHelper.js';
 
-export const getSiteVisits = async (req, res) => {
-  try {
-    const features = new APIFeatures(SiteVisit.find({ isActive: true }), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
+export const getSiteVisits = asyncHandler(async (req, res) => {
+  const features = new APIFeatures(SiteVisit.find({ isActive: true }), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
 
-    const visits = await features.query
-      .populate('customer', 'name email phone')
-      .populate('plot', 'plotNumber')
-      .populate('project', 'name slug')
-      .populate('salesExecutive', 'name email');
+  const visits = await features.query
+    .populate(POPULATE_CUSTOMER_BASIC)
+    .populate(POPULATE_PLOT_BASIC)
+    .populate(POPULATE_PROJECT_BASIC)
+    .populate(POPULATE_STAFF_BASIC('salesExecutive'));
 
-    const total = await SiteVisit.countDocuments({ isActive: true });
+  const total = await SiteVisit.countDocuments({ isActive: true });
+  sendPaginated(res, visits, total, req.query.page, req.query.limit);
+});
 
-    res.status(200).json({
-      success: true,
-      count: visits.length,
-      total,
-      data: visits,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+export const getSiteVisit = asyncHandler(async (req, res) => {
+  const visit = await SiteVisit.findById(req.params.id)
+    .populate(POPULATE_CUSTOMER_BASIC)
+    .populate(POPULATE_PLOT_FULL)
+    .populate(POPULATE_PROJECT_FULL)
+    .populate(POPULATE_STAFF_BASIC('salesExecutive'));
+
+  if (!visit) {
+    return res.status(404).json({ success: false, message: 'Site visit not found' });
   }
-};
 
-export const getSiteVisit = async (req, res) => {
-  try {
-    const visit = await SiteVisit.findById(req.params.id)
-      .populate('customer', 'name email phone')
-      .populate('plot', 'plotNumber price facing')
-      .populate('project', 'name slug type location')
-      .populate('salesExecutive', 'name email');
+  sendSuccess(res, visit);
+});
 
-    if (!visit) {
-      return res.status(404).json({ success: false, message: 'Site visit not found' });
-    }
+export const createSiteVisit = asyncHandler(async (req, res) => {
+  const visit = await SiteVisit.create({
+    ...req.body,
+    customer: req.body.customer || req.user?._id,
+  });
 
-    res.status(200).json({ success: true, data: visit });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const createSiteVisit = async (req, res) => {
-  try {
-    const visit = await SiteVisit.create({
-      ...req.body,
-      customer: req.body.customer || req.user?._id,
-    });
-
-    res.status(201).json({ success: true, data: visit });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+  sendSuccess(res, visit, null, 201);
+});
 
 export const updateSiteVisit = async (req, res) => {
   try {

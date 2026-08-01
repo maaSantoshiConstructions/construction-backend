@@ -3,61 +3,58 @@ import Plot from '../models/Plot.js';
 import Customer from '../models/Customer.js';
 import Payment from '../models/Payment.js';
 import APIFeatures from '../utils/apiFeatures.js';
+import asyncHandler from '../middleware/asyncHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
+import {
+  POPULATE_CUSTOMER_BASIC,
+  POPULATE_CUSTOMER_FULL,
+  POPULATE_PLOT_BASIC,
+  POPULATE_PLOT_FULL,
+  POPULATE_PROJECT_BASIC,
+  POPULATE_PROJECT_FULL,
+  POPULATE_STAFF_BASIC,
+} from '../utils/populateHelper.js';
 
 // ─── GET /bookings ────────────────────────────────────────────────────────────
-export const getBookings = async (req, res) => {
-  try {
-    // Build base query — support filtering by bookingStatus, paymentStatus, project
-    const queryObj = { isActive: true };
-    if (req.query.bookingStatus) queryObj.bookingStatus = req.query.bookingStatus;
-    if (req.query.paymentStatus) queryObj.paymentStatus = req.query.paymentStatus;
-    if (req.query.project) queryObj.project = req.query.project;
+// ─── GET /bookings ────────────────────────────────────────────────────────────
+export const getBookings = asyncHandler(async (req, res) => {
+  const queryObj = { isActive: true };
+  if (req.query.bookingStatus) queryObj.bookingStatus = req.query.bookingStatus;
+  if (req.query.paymentStatus) queryObj.paymentStatus = req.query.paymentStatus;
+  if (req.query.project) queryObj.project = req.query.project;
 
-    const features = new APIFeatures(Booking.find(queryObj), req.query)
-      .sort()
-      .limitFields()
-      .paginate();
+  const features = new APIFeatures(Booking.find(queryObj), req.query)
+    .sort()
+    .limitFields()
+    .paginate();
 
-    const bookings = await features.query
-      .populate('customer', 'name email phone')
-      .populate('plot', 'plotNumber size facing')
-      .populate('project', 'name slug')
-      .populate('salesExecutive', 'name email')
-      .populate('channelPartner', 'name email');
+  const bookings = await features.query
+    .populate(POPULATE_CUSTOMER_BASIC)
+    .populate(POPULATE_PLOT_BASIC)
+    .populate(POPULATE_PROJECT_BASIC)
+    .populate(POPULATE_STAFF_BASIC('salesExecutive'))
+    .populate(POPULATE_STAFF_BASIC('channelPartner'));
 
-    const total = await Booking.countDocuments(queryObj);
-
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      total,
-      totalPages: Math.ceil(total / (req.query.limit || 10)),
-      data: bookings,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+  const total = await Booking.countDocuments(queryObj);
+  sendPaginated(res, bookings, total, req.query.page, req.query.limit);
+});
 
 // ─── GET /bookings/:id ────────────────────────────────────────────────────────
-export const getBooking = async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id)
-      .populate('customer', 'name email phone')
-      .populate('plot', 'plotNumber size facing price coordinates')
-      .populate('project', 'name slug type')
-      .populate('salesExecutive', 'name email')
-      .populate('channelPartner', 'name email');
+// ─── GET /bookings/:id ────────────────────────────────────────────────────────
+export const getBooking = asyncHandler(async (req, res) => {
+  const booking = await Booking.findById(req.params.id)
+    .populate(POPULATE_CUSTOMER_BASIC)
+    .populate(POPULATE_PLOT_FULL)
+    .populate(POPULATE_PROJECT_FULL)
+    .populate(POPULATE_STAFF_BASIC('salesExecutive'))
+    .populate(POPULATE_STAFF_BASIC('channelPartner'));
 
-    if (!booking) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-
-    res.status(200).json({ success: true, data: booking });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!booking) {
+    return res.status(404).json({ success: false, message: 'Booking not found' });
   }
-};
+
+  sendSuccess(res, booking);
+});
 
 // ─── GET /bookings/:id/details — enriched with paymentSummary + payments ─────
 export const getBookingDetails = async (req, res) => {
