@@ -23,8 +23,24 @@ export const loginValidation = [
 ];
 
 export const projectValidation = [
-  check('name', 'Project name is required').not().isEmpty().trim(),
-  check('type', 'Project type is required').not().isEmpty(),
+  check('name', 'Project Name is required').not().isEmpty().trim(),
+  check('type', 'Project Type is required').not().isEmpty(),
+  check('status', 'Project Status is required').not().isEmpty(),
+  check('totalPlots', 'Total Plots is required and must be a non-negative number')
+    .not().isEmpty()
+    .isNumeric({ min: 0 }),
+  check('totalArea', 'Total Area is required and must be a non-negative number')
+    .not().isEmpty()
+    .isNumeric({ min: 0 }),
+  check('possessionDate', 'Possession Date is required').not().isEmpty(),
+  check('reraNumber', 'RERA Number is required').not().isEmpty().trim(),
+  check('location').custom((val, { req }) => {
+    const locAddress = typeof val === 'object' && val !== null ? val.address : val;
+    if (!locAddress || !locAddress.trim()) {
+      throw new Error('Location / Area is required');
+    }
+    return true;
+  }),
   handleValidationErrors,
 ];
 

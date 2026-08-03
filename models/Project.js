@@ -16,28 +16,29 @@ const ProjectSchema = new Schema(
     },
     description: String,
     location: {
-      address: String,
-      city: String,
-      state: String,
+      address: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
       pincode: String,
       coordinates: {
         lat: Number,
         lng: Number,
       },
     },
-    totalPlots: { type: Number, min: 0 },
-    totalArea: { type: Number, min: 0 },
+    totalPlots: { type: Number, min: [0, 'Total plots must be 0 or greater'] },
+    totalArea: { type: Number, min: [0, 'Total area must be 0 or greater'] },
     status: {
       type: String,
       enum: ['upcoming', 'ongoing', 'completed'],
       default: 'upcoming',
+      required: [true, 'Project status is required'],
     },
-    pricePerSqft: { type: Number, min: 0 },
+    pricePerSqft: { type: Number, min: [0, 'Price per sq.ft must be positive'] },
     images: [String],
     videos: [String],
     amenities: [String],
     highlights: [String],
-    reraNumber: String,
+    reraNumber: { type: String, trim: true, sparse: true },
     possessionDate: Date,
     layoutImage: String,
     featured: { type: Boolean, default: false },
@@ -50,6 +51,8 @@ const ProjectSchema = new Schema(
 ProjectSchema.index({ status: 1 });
 ProjectSchema.index({ type: 1 });
 ProjectSchema.index({ featured: 1 });
+ProjectSchema.index({ reraNumber: 1 }, { unique: true, sparse: true });
+ProjectSchema.index({ name: 1, 'location.address': 1, 'location.city': 1 }, { unique: true, sparse: true });
 
 ProjectSchema.pre('validate', function (next) {
   if (this.name && !this.slug) {
