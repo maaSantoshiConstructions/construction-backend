@@ -111,7 +111,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/property-valuations', propertyValuationRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-app.get('/api/health', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
