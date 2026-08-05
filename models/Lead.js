@@ -40,6 +40,17 @@ const LeadSchema = new Schema(
       ref: 'Project',
     },
     requirement: { type: String },
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    referralCode: { type: String, trim: true },
+    referrerInfo: {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      email: { type: String, trim: true, lowercase: true },
+    },
+    commissionAmount: { type: Number, default: 0 },
     notes: [
       {
         text: String,
@@ -67,6 +78,7 @@ LeadSchema.index({ phone: 1 });
 LeadSchema.index({ status: 1 });
 LeadSchema.index({ assignedTo: 1 });
 LeadSchema.index({ project: 1 });
+LeadSchema.index({ referredBy: 1 });
 
 const Lead = model('Lead', LeadSchema);
 export default Lead;

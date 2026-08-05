@@ -3,7 +3,7 @@ import { sendSuccess } from '../utils/responseHandler.js';
 import * as leadService from '../services/leadService.js';
 
 export const getLeads = asyncHandler(async (req, res) => {
-  const { leads, total } = await leadService.fetchAllLeads(req.query);
+  const { leads, total } = await leadService.fetchAllLeads(req.query, req.user);
   res.status(200).json({
     success: true,
     count: leads.length,
@@ -23,7 +23,7 @@ export const getLead = asyncHandler(async (req, res) => {
 });
 
 export const createLead = asyncHandler(async (req, res) => {
-  const lead = await leadService.createNewLead(req.body, req.user?._id);
+  const lead = await leadService.createNewLead(req.body, req.user);
   res.status(201).json({ success: true, data: lead });
 });
 

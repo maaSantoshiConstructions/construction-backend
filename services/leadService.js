@@ -35,11 +35,20 @@ export const syncCustomerUsersToLeads = async () => {
   }
 };
 
-export const fetchAllLeads = async (query) => {
+export const fetchAllLeads = async (query, authUser) => {
   await syncCustomerUsersToLeads();
 
   const filter = { isActive: true };
-  const features = new APIFeatures(Lead.find(filter), query)
+
+  // If customer or channel partner requests leads without specifying explicit query, scope to their referrals
+  if (authUser && (authUser.role === 'customer' || authUser.role === 'channel_partner') && !query?.all) {
+    filter.referredBy = authUser._id;
+  }
+
+  const features = new APIFeatures(
+    Lead.find(filter).populate('referredBy', 'name email phone referralCode role'),
+    query
+  )
     .search(['name', 'email', 'phone'])
     .filter()
     .sort()
@@ -53,7 +62,7 @@ export const fetchAllLeads = async (query) => {
 };
 
 export const fetchLeadById = async (id) => {
-  return await Lead.findById(id);
+  return await Lead.findById(id).populate('referredBy', 'name email phone referralCode role');
 };
 
 export const normalizeNotesInput = (notes, userId) => {
@@ -67,13 +76,33 @@ export const normalizeNotesInput = (notes, userId) => {
   return notes;
 };
 
-export const createNewLead = async (leadData, userId) => {
+export const createNewLead = async (leadData, authUser) => {
   const payload = { ...leadData };
+  const userId = authUser?._id || authUser;
+
   if (payload.notes) {
     payload.notes = normalizeNotesInput(payload.notes, userId);
   }
 
+  // Populate referrer fields if logged in user is submitting
+  if (authUser && typeof authUser === 'object' && authUser._id) {
+    payload.referredBy = payload.referredBy || authUser._id;
+    payload.referralCode =
+      payload.referralCode ||
+      authUser.referralCode ||
+      `REF-${authUser._id.toString().slice(-6).toUpperCase()}`;
+    payload.referrerInfo = {
+      name: authUser.name || payload.referrerInfo?.name || '',
+      email: authUser.email || payload.referrerInfo?.email || '',
+      phone: authUser.phone || payload.referrerInfo?.phone || '',
+    };
+  }
+
   const lead = await Lead.create(payload);
+
+  if (lead.referredBy) {
+    await lead.populate('referredBy', 'name email phone referralCode role');
+  }
 
   if (lead.email) {
     sendEmail({

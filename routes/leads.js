@@ -1,10 +1,10 @@
 import express from 'express';
 import { getLeads, getLead, createLead, updateLead, assignLead, getMyLeads, getLeadStats, addNote, deleteLead, sendLeadEmail } from '../controllers/leadController.js';
-import { protect, authorize } from '../middleware/auth.js';
+import { protect, authorize, optionalProtect } from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 const router = express.Router();
 
-router.post('/', createLead);
+router.post('/', optionalProtect, createLead);
 
 router.get('/my-leads', protect, authorize('sales_executive'), getMyLeads);
 router.get('/stats', protect, authorize('super_admin', 'company_admin'), getLeadStats);
