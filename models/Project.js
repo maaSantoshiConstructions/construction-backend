@@ -38,7 +38,7 @@ const ProjectSchema = new Schema(
     videos: [String],
     amenities: [String],
     highlights: [String],
-    reraNumber: { type: String, trim: true, sparse: true },
+    reraNumber: { type: String, trim: true },
     possessionDate: Date,
     layoutImage: String,
     featured: { type: Boolean, default: false },
