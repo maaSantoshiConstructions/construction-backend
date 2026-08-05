@@ -47,11 +47,8 @@ export const getUpdate = async (req, res) => {
 
 export const createUpdate = async (req, res) => {
   try {
-    const imageUrls = req.files ? req.files.map((file) => file.path || file.location) : [];
-
     const update = await ConstructionUpdate.create({
       ...req.body,
-      images: imageUrls,
       updatedBy: req.user._id,
     });
 
@@ -64,10 +61,6 @@ export const createUpdate = async (req, res) => {
 export const updateUpdate = async (req, res) => {
   try {
     const updateData = { ...req.body };
-    if (req.files && req.files.length > 0) {
-      const imageUrls = req.files.map((file) => file.path || file.location);
-      updateData.images = imageUrls;
-    }
 
     const update = await ConstructionUpdate.findByIdAndUpdate(
       req.params.id,

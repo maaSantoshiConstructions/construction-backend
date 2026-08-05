@@ -22,7 +22,6 @@ const ConstructionUpdateSchema = new Schema(
       max: [100, 'Progress cannot exceed 100'],
       default: 0,
     },
-    images: [String],
     droneVideos: [String],
     engineerReport: String,
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: [true, 'Updated by is required'] },

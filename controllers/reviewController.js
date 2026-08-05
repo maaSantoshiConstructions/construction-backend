@@ -1,39 +1,40 @@
 import Review from '../models/Review.js';
+import Project from '../models/Project.js';
 
 const SEED_REVIEWS = [
   {
     name: 'Arakhita Mohanty',
     rating: 5,
-    comment: 'Purchased a plot in Royal Gardens Phase 1. The documentation process was extremely transparent. Staff assisted us in title verification and getting RERA documents. Highly recommended!',
-    project: 'Royal Gardens Phase 1',
+    comment: 'Purchased a plot recently. The documentation process was extremely transparent. Staff assisted us in title verification and getting RERA documents. Highly recommended!',
+    project: 'Green City',
     helpfulVotes: 24,
   },
   {
     name: 'Subhashree Dash',
     rating: 5,
     comment: 'Maa Santoshi Constructions is the most trusted developer in Bhubaneswar. The development speed is impressive. Wide roads, boundary walls, and electricity are already in place.',
-    project: 'Royal Gardens Phase 2',
+    project: 'Kalinga Valley',
     helpfulVotes: 18,
   },
   {
     name: 'Debasish Patnaik',
     rating: 4,
     comment: 'Very satisfied with their service. We got our plot registered last month. Only minor delay in getting the layout plan approved, but the support team helped resolve it quickly.',
-    project: 'Santoshi Vihar',
+    project: 'Sea View Commercial Hub',
     helpfulVotes: 11,
   },
   {
     name: 'Priyanka Mishra',
     rating: 5,
     comment: 'Great investment opportunity. The appreciation rate in this corridor is very promising. Excellent customer service and clear communication throughout the booking process.',
-    project: 'Royal Gardens Phase 2',
+    project: 'Green City',
     helpfulVotes: 9,
   },
   {
     name: 'Niranjan Sahoo',
     rating: 4,
     comment: 'Excellent location and good pricing. The staff is polite and guided us through the bank loan process. Looking forward to constructing my villa next year.',
-    project: 'Santoshi Vihar',
+    project: 'Kalinga Valley',
     helpfulVotes: 7,
   },
 ];
@@ -42,7 +43,16 @@ export const getReviews = async (req, res) => {
   try {
     let count = await Review.countDocuments();
     if (count === 0) {
-      await Review.insertMany(SEED_REVIEWS);
+      const activeProjects = await Project.find({ isActive: true }).select('name');
+      const realProjectNames = activeProjects.map((p) => p.name);
+      
+      const seedData = SEED_REVIEWS.map((rev, idx) => ({
+        ...rev,
+        project: realProjectNames.length > 0
+          ? realProjectNames[idx % realProjectNames.length]
+          : rev.project,
+      }));
+      await Review.insertMany(seedData);
     }
 
     const { sort, rating, project } = req.query;
