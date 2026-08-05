@@ -22,7 +22,7 @@ router.get('/my-bookings', protect, getMyBookings);
 // Admin / staff routes
 router.get('/', protect, authorize('super_admin', 'company_admin', 'sales_executive'), getBookings);
 router.get('/stats', protect, authorize('super_admin', 'company_admin'), getBookingStats);
-router.post('/', protect, upload.single('receipt'), createBooking);
+router.post('/', protect, createBooking);
 
 // Single booking — detail & summary
 router.get('/:id', protect, getBooking);

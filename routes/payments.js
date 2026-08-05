@@ -32,12 +32,11 @@ router.get('/:id', protect, getPayment);
 router.get('/:id/receipt', protect, downloadReceipt);
 router.get('/:id/invoice', protect, downloadInvoice); // backward compat alias
 
-// Create payment — supports optional receipt file upload
+// Create payment
 router.post(
   '/',
   protect,
   authorize('super_admin', 'company_admin', 'sales_executive'),
-  upload.single('receipt'),
   createPayment
 );
 

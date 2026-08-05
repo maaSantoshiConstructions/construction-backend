@@ -28,8 +28,6 @@ export const createPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
     }
 
-    const receiptUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-
     const payment = await Payment.create({
       booking: bookingId,
       customer: booking.customer,
@@ -43,7 +41,6 @@ export const createPayment = async (req, res) => {
       collectedBy: req.user._id,
       transactionStatus: 'success',
       paidAt: paymentDate ? new Date(paymentDate) : new Date(),
-      receiptUrl,
     });
 
     const updatedBooking = await recalcBookingTotals(bookingId);

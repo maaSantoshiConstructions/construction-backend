@@ -61,8 +61,6 @@ export const createBooking = async (req, res) => {
       const pMethod = paymentMethod || 'cash';
       const refNum = pMethod === 'cash' ? undefined : referenceNumber || undefined;
       const pDate = paymentDate ? new Date(paymentDate) : new Date();
-      const receiptUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-
       await Payment.create({
         booking: booking._id,
         customer: customer || req.user._id,
@@ -74,7 +72,6 @@ export const createBooking = async (req, res) => {
         referenceNumber: refNum,
         transactionStatus: 'success',
         paidAt: pDate,
-        receiptUrl,
         remarks: 'Token amount collected during booking registration.',
         collectedBy: req.user._id,
       });
