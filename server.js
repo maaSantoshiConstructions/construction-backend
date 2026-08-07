@@ -40,27 +40,32 @@ import reviewRoutes from './routes/reviews.js';
 
 const app = express();
 const httpServer = createServer(app);
+const frontendOrigins = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(',')
+  : process.env.FRONTEND_URL
+    ? [process.env.FRONTEND_URL]
+    : [];
+
 const allowedOrigins = [
-  process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null,
-  'https://maasantoshiconstructions.netlify.app',
+  ...frontendOrigins,
   'http://localhost:5173',
   'http://localhost:3000',
-].filter(Boolean);
+].map((origin) => origin.trim().replace(/\/+$/, '')).filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const cleanOrigin = origin.replace(/\/$/, '');
-    if (process.env.FRONTEND_URL === '*' || allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.netlify.app')) {
-      return callback(null, cleanOrigin);
+    if (allowedOrigins.includes(cleanOrigin)) {
+      return callback(null, true);
     }
-    callback(null, cleanOrigin);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 };
 
 const io = new Server(httpServer, {
-  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true }
+  cors: corsOptions
 });
 
 io.on('connection', (socket) => {
